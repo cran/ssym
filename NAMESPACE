@@ -1,0 +1,6 @@
+exportPattern("^[[:alpha:]]+")
+#export(rvgs, lambda_hat, splinek, ncs.graph, ssym.nl, ssym.l, itpE, itpE2, itpM, itpM2)
+
+import(GIGrvg, numDeriv, gsl, normalp)
+
+
