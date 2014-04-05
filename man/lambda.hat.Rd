@@ -1,10 +1,10 @@
-\name{lambda_hat}
-\alias{lambda_hat}
+\name{lambda.hat}
+\alias{lambda.hat}
 \title{Choosing the smoothing parameter}
 \description{
-\bold{lambda hat} is used to choose the smoothing parameter based on the cross-validation score.}
+\bold{lambda.hat} is used to choose the smoothing parameter based on the cross-validation score.}
 \usage{
-lambda_hat(response,x,xx,lambda,plot)
+lambda.hat(response,x,xx,lambda,plot)
 }
 \arguments{
   \item{response}{the response variable.}
@@ -27,9 +27,9 @@ y <- cos(4*pi*t) + rnorm(n)
 ss <- splinek(as.numeric(levels(factor(t))),t)
 N <- ss$N
 M <- ss$K
-lambda <- lambda_hat(y,as.numeric(levels(factor(t))),t,1,plot=TRUE)
+lambda <- lambda.hat(y,as.numeric(levels(factor(t))),t,1,plot=TRUE)
 lambda <- lambda$lambda_hat
-h <- solve(t(N)\%*\%N + lambda*M)\%*\%t(N)%*%y
+h <- solve(t(N)\%*\%N + lambda*M)\%*\%t(N)\%*\%y
 gam <- solve(ss$R)\%*\%t(ss$Q)\%*\%h
 sa <- ncs.graph(as.numeric(levels(factor(t))),h,gam,1000)
 

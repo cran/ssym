@@ -5,7 +5,7 @@
 \bold{ssym.nl} is used to fit a semiparametric regression model suitable for 
 data set analysis in which the conditional distribution of the response (or log-response) is 
 symmetric and continuous. In this setup, both location and dispersion
-parameters of response (or log-response) variable distribution are explicitly modeled, 
+parameters of the response (or log-response) variable distribution are explicitly modeled, 
 the location using a nonlinear function and the dispersion using a 
 semiparametric function, which is aproximated by a natural cubic spline.}
 \usage{

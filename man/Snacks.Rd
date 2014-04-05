@@ -14,12 +14,12 @@ in a laboratory and various variables were measured.
   A data frame with 750 observations on the following 3 variables.
   \describe{
     \item{\code{texture}}{texture of snack.}
-    \item{\code{snack}}{a factor with levels 1-5 which correspond to A-D forms of snacks.}
+    \item{\code{snack}}{a factor with levels 1-5 which correspond to A-E forms of snacks.}
     \item{\code{week}}{week in which the snack was analyzed.}
   }
 }
 \references{
-Paula, G.A., de Moura, A.S., Yamaguchi, A.M., 2004. Sensorial stability of snacks with canola oil and hydrogenated vegetable fat. Technical Report. Center of
+Paula, G.A., de Moura, A.S., Yamaguchi, A.M. (2004) Sensorial stability of snacks with canola oil and hydrogenated vegetable fat. Technical Report. Center of
 Applied Statistics, University of Sao Paulo (in Portuguese).}
 \examples{
 data(Snacks)

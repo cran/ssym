@@ -12,7 +12,7 @@
   }
 }
 \references{
-J.R. Rieck and J.R. Nedelman, A log-linear model for the Birnbaum-Saunders distribution, Technometrics 33 (1991), 51:60.}
+J.R. Rieck and J.R. Nedelman (1991) A log-linear model for the Birnbaum-Saunders distribution, Technometrics 33, 51:60.}
 \examples{
 data(Biaxial)
 attach(Biaxial)

@@ -1,4 +1,4 @@
-lambda_hat <-
+lambda.hat <-
 function(response,x,xx,lambda,plot){
 	z <- splinek(x,xx)
 	N <- z$N
@@ -20,5 +20,5 @@ function(response,x,xx,lambda,plot){
 	  plot(exp(lambdas),cves,type="l",xlab="smoothing parameter",ylab="cross-validation score",main="Behavior of the cross-validation score")
 	  abline(v=exp(salida$par),col="blue",lty=3)
 	}
-	list(value=salida$value, lambda_hat=exp(salida$par))
+	list(value=fr(salida$par), lambda_hat=exp(salida$par))
 }

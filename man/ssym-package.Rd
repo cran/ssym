@@ -24,16 +24,15 @@ Maintainer: Luis Hernando Vanegas
             Vanegas, L.H. and Paula, G.A. (2014) Log-symmetric distributions: statistical properties and parameter estimation. Brazilian Journal of Probability and Statistics (submitted)}
 
 \examples{
-library(NISTnls)
-Chwirut <- Chwirut1[order(Chwirut1$x,Chwirut1$y),]
-attach(Chwirut)
+data(Snacks)
+Snacks2 <- Snacks[order(Snacks$snack,Snacks$week,Snacks$texture),]
+attach(Snacks2)
 
-loc.f <- function(vP){
-	          beta <- vP[1:3]
-	         -beta[1]*x - log(beta[2] + beta[3]*x)	  
-}
-start <- c(b1=0.15, b2=0.005, b3=0.012)
-fit <- ssym.nl(log(y),loc.f,start=start,ncs=x,family='Hyperbolic',xi=1,
-               local.influence=TRUE)
+snack <- factor(snack)
+week2 <- week^2
+week3 <- week^3
+
+fit <- ssym.l(log(texture),formula.mu=~snack + week2 + week3,formula.phi=~snack,
+              ncs=week,family='Normal',local.influence=TRUE)
 summary(fit)
 }

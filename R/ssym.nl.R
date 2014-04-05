@@ -287,7 +287,7 @@ if(missingArg(lambda)){
   objeto$l <- l  
   phi.sint <- log((y - mu(vP$theta)[subset])^2)
   if(l>0) phi.sint <- phi.sint - W%*%solve(t(W)%*%W)%*%t(W)%*%phi.sint
-  lambda_est <- lambda_hat(phi.sint,x,xx,start.lambda)
+  lambda_est <- lambda.hat(phi.sint,x,xx,start.lambda)
   lambda <- lambda_est$lambda_hat
 
 }

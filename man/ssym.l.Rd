@@ -5,7 +5,7 @@
 \bold{ssym.l} is used to fit a semiparametric regression model suitable for 
 data set analysis in which the conditional distribution of the response (or log-response) is 
 symmetric and continuous. In this setup, both location and dispersion
-parameters of response (or log-response) variable distribution are explicitly modeled, 
+parameters of the response (or log-response) variable distribution are explicitly modeled, 
 the location using a linear function and the dispersion using a 
 semiparametric function, which is aproximated by a natural cubic spline.}
 \usage{
@@ -184,4 +184,27 @@ m2 <- "Total Local Influence under response perturbation scheme"
 plot(fit$pr[,1], type="h", main=m1, xlab="Index", ylab="")
 plot(fit$pr[,2], type="h", main=m2, xlab="Index", ylab="")
 
+########################################################################################
+######### Gross Domestic Product per capita Data - a Birnbaum-Saunders model ###########
+#########################################################################################
+
+data(gdp)
+attach(gdp)
+gdp2010 <- sort(gdp2010)
+
+fit <- ssym.l(log(gdp2010), family='Sinh-normal', xi=2.2)
+summary(fit)
+
+xl <- "GDP per capita 2010"
+par(mfrow=c(1,2))
+hist(gdp2010,xlim=range(gdp2010),ylim=c(0,0.00015),prob=TRUE,breaks=55,col="light gray",
+     border="dark gray",xlab="",main="",ylab="")
+par(new=TRUE)
+plot(gdp2010,exp(fit$lpdf)/gdp2010,xlim=range(gdp2010),ylim=c(0,0.00015),type="l",
+     xlab=xl,ylab="",main="Histogram")
+
+plot(gdp2010,fit$cdfz,xlim=range(gdp2010),ylim=c(0,1),type="l",xlab="",ylab="")
+par(new=TRUE)
+plot(ecdf(gdp2010),xlim=range(gdp2010),ylim=c(0,1),verticals=TRUE,do.points=FALSE,
+     col="dark gray",xlab=xl,main="ecdf")
 }
