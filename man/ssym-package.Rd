@@ -10,7 +10,7 @@ This package allows to fit a semiparametric regression model suitable for data s
 Package: \tab ssym\cr
 Type: \tab Package\cr
 Version: \tab 1.0\cr
-Date: \tab 2014-03-30\cr
+Date: \tab 2014-04-15\cr
 License: \tab GPL-2 | GPL-3\cr
 }
 }
@@ -29,10 +29,8 @@ Snacks2 <- Snacks[order(Snacks$snack,Snacks$week,Snacks$texture),]
 attach(Snacks2)
 
 snack <- factor(snack)
-week2 <- week^2
-week3 <- week^3
 
-fit <- ssym.l(log(texture),formula.mu=~snack + week2 + week3,formula.phi=~snack,
-              ncs=week,family='Normal',local.influence=TRUE)
+fit <- ssym.l(log(texture), formula.mu=~snack, ncs.mu=week, formula.phi=~snack,
+              family='Student', xi=14, local.influence=TRUE)
 summary(fit)
 }

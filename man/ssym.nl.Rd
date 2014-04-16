@@ -39,11 +39,11 @@ The smoothing parameter is chosen using the cross-validation score.
 \value{
 \item{coefs.mu}{a vector of parameter estimates associated with the nonlinear function fitted to the location of the response (or log-response) variable.}
 \item{coefs.phi}{a vector of parameter estimates associated with the semiparametric function fitted to the dispersion of the response (or log-response) variable.}
-\item{vcov.mu}{approximated variance-covariance matrix asociated with \emph{coefs.mu}.}
+\item{se.mu}{approximated standard errors asociated with \emph{coefs.mu}.}
 \item{se.phi}{approximated standard errors asociated with \emph{coefs.phi}.}
 \item{v}{final weights of the iterative process.}
-\item{lambda}{estimate for the smoothing parameter.}
-\item{gle}{degrees of freedom associated with the nonparametric part of the model.}
+\item{lambda.phi}{estimate for the smoothing parameter.}
+\item{gle.phi}{degrees of freedom associated with the nonparametric part of the model.}
 \item{deviance.mu}{a vector of \emph{deviances} associated with the location of the response (or log-response) variable.}
 \item{deviance.phi}{a vector of \emph{deviances} associated with the dispersion of the response (or log-response) variable.}
 \item{mu.fitted}{a vector of fitted values for the location of the response (or log-response) variable.}
@@ -179,6 +179,92 @@ m2 <- "Residuals for the dispersion submodel"
 res.dev.phi <- sqrt(fit$deviance.phi)*ifelse(fit$z.hat>=0,1,-1)
 ry <- c(min(res.dev.phi,-3.5),max(res.dev.phi,3.5))
 plot(age,res.dev.phi,cex=0.3,lwd=3,ylim=ry,main=m2,xlab=xl,ylab="")
+abline(h=-3,lty=3)
+abline(h=+3,lty=3)
+
+########################### Sensitivity analysis ##################################
+
+m1 <- "Local Influence under case-weight perturbation scheme"
+m2 <- "Total Local Influence under case-weight perturbation scheme"
+plot(fit$cw[,1], type="h", main=m1, xlab="Index", ylab="")
+plot(fit$cw[,2], type="h", main=m2, xlab="Index", ylab="")
+
+m1 <- "Local Influence under response perturbation scheme"
+m2 <- "Total Local Influence under response perturbation scheme"
+plot(fit$pr[,1], type="h", main=m1, xlab="Index", ylab="")
+plot(fit$pr[,2], type="h", main=m2, xlab="Index", ylab="")
+
+#########################################################################################
+####### Australian Institute of Sport Data - a log-normal semiparametric model #########
+#########################################################################################
+
+rm(list=ls())
+library(sn)
+data(ais)
+
+sex <- ifelse(ais$sex=="male",1,0)
+ais2 <- data.frame(ais[,8], sex, ais[,11])
+colnames(ais2) <- c("lbm","sex","bmi")
+ais2 <- ais2[order(ais2$sex,ais2$lbm,ais2$bmi),]
+attach(ais2)
+X <- cbind(1, lbm, sex, lbm*sex)
+
+location.f <- function(vP){
+	beta <- vP[1:4]
+	log(X\%*\%beta)
+}
+
+start = c(8, 0.3, 2, -0.07)
+names(start) <- c("Intercept","lbm","sex","lbm*sex")
+fit <- ssym.nl(log(bmi), mu=location.f, start=start, ~sex, ncs=lbm, lambda=10040.71,
+               family='Normal',	epsilon=0.00001, local.influence=TRUE)
+summary(fit)
+
+####################### Plot of the fitted model ##############################
+
+xl <- "Lean body mass"
+rx <- range(lbm)
+ry <- range(bmi)
+par(mfrow=c(4,2))
+plot(lbm[sex==0],bmi[sex==0],xlim=rx,ylim=ry,type="p",cex=0.5,lwd=1,ylab="",xlab="")
+par(new=TRUE)
+plot(lbm[sex==1],bmi[sex==1],xlim=rx,ylim=ry,type="p",cex=0.5,lwd=2,ylab="",xlab="")
+par(new=TRUE)
+plot(lbm[sex==0],exp(fit$mu.fitted[sex==0]),xlim=rx,ylim=ry,type="l",ylab="",xlab="")
+par(new=TRUE)
+plot(lbm[sex==1],exp(fit$mu.fitted[sex==1]),xlim=rx,ylim=ry,type="l",ylab="",
+     xlab=xl,main="Median")
+legend(rx[1],ry[2],pt.cex=0.5,pt.lwd=c(1,2),bty="n",legend=c("Female","Male"),pch=1)
+
+h <- fit$coefs.phi[2:length(fit$coefs.phi)]
+ss <- splinek(as.numeric(levels(factor(lbm))),lbm)
+gam <- solve(ss$R)%*%t(ss$Q)%*%h
+sa <- ncs.graph(as.numeric(levels(factor(lbm))),h,gam,1000)
+
+r <- (log(bmi) - fit$mu.fitted)^2/fit$xix
+ry <- range(r)
+plot(lbm[sex==0],r[sex==0],xlim=rx,ylim=ry,type="p",cex=0.5,lwd=1,ylab="",xlab="")
+par(new=TRUE)
+plot(lbm[sex==1],r[sex==1],xlim=rx,ylim=ry,type="p",cex=0.5,lwd=2,ylab="",xlab="")
+par(new=TRUE)
+plot(sa[,1],exp(sa[,2]),xlim=rx,ylim=ry,type="l",ylab="",xlab="")
+par(new=TRUE)
+plot(sa[,1],exp(sa[,2] + fit$coefs.phi[1]),xlim=rx,ylim=ry,type="l",ylab="",xlab=xl,
+     main="Skewness")
+legend(min(lbm),max(r),pt.cex=0.5,pt.lwd=c(1,2),bty="n",legend=c("Female","Male"),pch=1)
+
+########################### Residual analysis ##################################
+
+m1 <- "Residuals for the median submodel"
+res.dev.mu <- sqrt(fit$deviance.mu)*ifelse(fit$z.hat>=0,1,-1)
+ry <- c(min(res.dev.mu,-3.5),max(res.dev.mu,3.5))
+plot(lbm,res.dev.mu,cex=0.3,lwd=3,ylim=ry,main=m1,xlab=xl,ylab="")
+abline(h=-3,lty=3)
+abline(h=+3,lty=3)
+m2 <- "Residuals for the skewness submodel"
+res.dev.phi <- sqrt(fit$deviance.phi)*ifelse(fit$z.hat>=0,1,-1)
+ry <- c(min(res.dev.phi,-3.5),max(res.dev.phi,3.5))
+plot(lbm,res.dev.phi,cex=0.3,lwd=3,ylim=ry,main=m2,xlab=xl,ylab="")
 abline(h=-3,lty=3)
 abline(h=+3,lty=3)
 

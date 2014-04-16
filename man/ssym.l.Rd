@@ -9,23 +9,26 @@ parameters of the response (or log-response) variable distribution are explicitl
 the location using a linear function and the dispersion using a 
 semiparametric function, which is aproximated by a natural cubic spline.}
 \usage{
-ssym.l(response, formula.mu, start, formula.phi, ncs, start.lambda, lambda, family, xi,
-       epsilon, maxiter, subset, local.influence)
+ssym.l(response, formula.mu, ncs.mu, start.lambda.mu, lambda.mu, formula.phi,
+       ncs.phi, start.lambda.phi, lambda.phi, family, xi, epsilon, maxiter,
+	   subset, local.influence)
 }
 \arguments{
   \item{response}{the response (or log-response) variable.}
-  \item{formula.mu}{a symbolic description of the parametric function to be fitted to the location parameter.}
-  \item{start}{(optional) a named numeric vector of starting estimates.}
+  \item{formula.mu}{(optional) a symbolic description of the parametric function to be fitted to the location parameter.}
+  \item{ncs.mu}{(optional) an explanatory (continuous) variable to be used in the nonparametric function to be fitted to the location parameter.}
+  \item{start.lambda.mu}{(optional) a numeric value of starting estimate for the smoothing parameter associated to the location submodel.}
+  \item{lambda.mu}{(optional) a numerical value for the smoothing parameter indicating that it is provided by the user rather than estimated from the data.}
   \item{formula.phi}{(optional) a symbolic description of the parametric function to be fitted to the dispersion parameter.}
-  \item{ncs}{(optional) an explanatory (continuous) variable to be used in the nonparametric function to be fitted to the dispersion parameter.}
-  \item{start.lambda}{(optional) a numeric value of starting estimate for the smoothing parameter.}
-  \item{lambda}{(optional) a numerical value for the smoothing parameter indicating that it is provided by the user rather than estimated from the data.}
+  \item{ncs.phi}{(optional) an explanatory (continuous) variable to be used in the nonparametric function to be fitted to the dispersion parameter.}
+  \item{start.lambda.phi}{(optional) a numeric value of starting estimate for the smoothing parameter associated to the location submodel.}
+  \item{lambda.phi}{(optional) a numerical value for the smoothing parameter indicating that it is provided by the user rather than estimated from the data.}
   \item{family}{a description of the error distribution to be used in the model. Supported families include \emph{Normal}, \emph{Student}, \emph{Powerexp},
                 \emph{Hyperbolic}, \emph{Slash}, \emph{Sinh-normal} and \emph{Sinh-t}, which correspond to normal, Student-t, power exponential, symmetric hyperbolic,
 				slash, sinh-normal and sinh-t distributions, respectively.}
   \item{xi}{a numeric value or numeric vector that represents the extra parameter of the specified error distribution.}
   \item{epsilon}{(optional) positive convergence tolerance. Default value is 0.0000001.}
-  \item{maxiter}{(optional) an positive integer giving the maximal number of iterations for the estimating process. Default value is 500.}
+  \item{maxiter}{(optional) an positive integer giving the maximal number of iterations for the estimating process. Default value is 1000.}
   \item{subset}{(optional) expression indicating individuals or observations to keep (or drop).}
   \item{local.influence}{(optional) logical. If TRUE, local influence measures for the location parameters vector under two perturbation schemes are calculated.}
 }
@@ -39,11 +42,13 @@ The smoothing parameter is chosen using the cross-validation score.
 \value{
 \item{coefs.mu}{a vector of parameter estimates associated with the nonlinear function fitted to the location of the response (or log-response) variable.}
 \item{coefs.phi}{a vector of parameter estimates associated with the semiparametric function fitted to the dispersion of the response (or log-response) variable.}
-\item{vcov.mu}{approximated variance-covariance matrix asociated with \emph{coefs.mu}.}
+\item{se.mu}{approximated standard errors asociated with \emph{coefs.mu}.}
 \item{se.phi}{approximated standard errors asociated with \emph{coefs.phi}.}
 \item{v}{final weights of the iterative process.}
-\item{lambda}{estimate for the smoothing parameter.}
-\item{gle}{degrees of freedom associated with the nonparametric part of the model.}
+\item{lambda.mu}{estimate for the smoothing parameter associated to the location parameter.}
+\item{gle.mu}{degrees of freedom associated with the nonparametric part of the location submodel.}
+\item{lambda.phi}{estimate for the smoothing parameter associated to the dispersion parameter.}
+\item{gle.phi}{degrees of freedom associated with the nonparametric part of the dispersion submodel.}
 \item{deviance.mu}{a vector of \emph{deviances} associated with the location of the response (or log-response) variable.}
 \item{deviance.phi}{a vector of \emph{deviances} associated with the dispersion of the response (or log-response) variable.}
 \item{mu.fitted}{a vector of fitted values for the location of the response (or log-response) variable.}
@@ -69,7 +74,7 @@ The smoothing parameter is chosen using the cross-validation score.
 
 \examples{
 #########################################################################################
-############## Texture of Snacks Data - a log-normal semiparametric model ###############
+############## Texture of Snacks Data - a log-Student-t semiparametric model ############
 #########################################################################################
 
 data(Snacks)
@@ -77,46 +82,42 @@ Snacks2 <- Snacks[order(Snacks$snack,Snacks$week,Snacks$texture),]
 attach(Snacks2)
 
 snack <- factor(snack)
-week2 <- week^2
-week3 <- week^3
 
-fit <- ssym.l(log(texture),formula.mu=~snack + week2 + week3,formula.phi=~snack,
-              ncs=week,family='Normal',local.influence=TRUE)
+fit <- ssym.l(log(texture), formula.mu=~snack, ncs.mu=week, formula.phi=~snack,
+              family='Student', xi=14, local.influence=TRUE)
 summary(fit)
 
 ####################### Plot of the fitted model ##############################
 
 par(mfrow=c(4,2))
+xl <- "Week"
 rx <- range(week)
 ry <- range(texture)
-plot(week,texture,xlim=rx,ylim=ry,type="p",cex=0.3,lwd=3,ylab="",xlab="")
-for(i in 1:5){
- par(new=TRUE)
- plot(week[snack==i],exp(fit$mu.fitted[snack==i]),xlim=rx,ylim=ry,
-      type="l",ylab="",xlab="",lty=i,main="Median")
-}
-legend(min(week),max(texture),lty=1:5,bty="n",legend=paste("snack",1:5))
-
-h <- fit$coefs.phi[5:length(fit$coefs.phi)]
+h <- fit$coefs.mu[5:length(fit$coefs.mu)]
 ss <- splinek(as.numeric(levels(factor(week))),week)
 gam <- solve(ss$R)%*%t(ss$Q)%*%h
 sa <- ncs.graph(as.numeric(levels(factor(week))),h,gam,1000)
 
+plot(week,texture,xlim=rx,ylim=ry,type="p",cex=0.3,lwd=3,ylab="",xlab="")
+par(new=TRUE)
+plot(sa[,1],exp(sa[,2]),xlim=rx,ylim=ry,type="l",ylab="",xlab=xl,lty=1,main="")
+for(i in 2:5){
+	 par(new=TRUE)
+	 plot(sa[,1],exp(sa[,2] + fit$coefs.mu[i-1]),xlim=rx,ylim=ry,type="l",
+	      ylab="",xlab="",lty=i,main="Median")
+}
+legend(rx[1],ry[2],lty=1:5,bty="n",legend=paste("snack",1:5))
+
 r <- (log(texture) - fit$mu.fitted)^2/fit$xix
 ry <- range(r)
-plot(week,r,xlim=rx,ylim=ry,type="p",cex=0.3,lwd=3,ylab="",xlab="")
-par(new=TRUE)
-plot(sa[,1],exp(sa[,2]),xlim=rx,ylim=ry,type="l",ylab="",xlab="",lty=1)
-for(i in 1:4){
- par(new=TRUE)
- plot(sa[,1],exp(sa[,2]+fit$coefs.phi[i]),xlim=rx,ylim=ry,type="l",ylab="",xlab="",
-      lty=i,main="Skewness")
+plot(week,r,xlim=rx,ylim=ry,type="p",cex=0.3,lwd=3,ylab="",xlab=xl,main="Median")
+for(i in 1:5){
+	abline(h=mean(fit$phi.fitted[snack==i]), lty=i)
 }
-legend(min(week),max(r),lty=1:5,bty="n",legend=paste("snack",1:5))
+legend(rx[1],ry[2],lty=1:5,bty="n",legend=paste("snack",1:5))
 
 ########################### Residual analysis ##################################
 
-xl <- "Week"
 m1 <- "Residuals for the median submodel"
 res.dev.mu <- sqrt(fit$deviance.mu)*ifelse(fit$z.hat>=0,1,-1)
 ry <- c(min(res.dev.mu,-3.5),max(res.dev.mu,3.5))
@@ -169,6 +170,64 @@ plot(Work,exp(fit$mu.fitted),xlim=rx,ylim=ry,type="l",ylab="Life",xlab=xl,main="
 res.dev.mu <- sqrt(fit$deviance.mu)*ifelse(fit$z.hat>=0,1,-1)
 ry <- c(min(res.dev.mu,-3.5),max(res.dev.mu,3.5))
 plot(Work,res.dev.mu,cex=0.3,lwd=3,ylim=ry,main="Residuals",xlab=xl,ylab="")
+abline(h=-3,lty=3)
+abline(h=+3,lty=3)
+
+########################### Sensitivity analysis ##################################
+
+m1 <- "Local Influence under case-weight perturbation scheme"
+m2 <- "Total Local Influence under case-weight perturbation scheme"
+plot(fit$cw[,1], type="h", main=m1, xlab="Index", ylab="")
+plot(fit$cw[,2], type="h", main=m2, xlab="Index", ylab="")
+
+m1 <- "Local Influence under response perturbation scheme"
+m2 <- "Total Local Influence under response perturbation scheme"
+plot(fit$pr[,1], type="h", main=m1, xlab="Index", ylab="")
+plot(fit$pr[,2], type="h", main=m2, xlab="Index", ylab="")
+
+###################################################################################
+############## Personal Claims Data - a Birnbaum-Saunders-t model  ################
+###################################################################################
+
+data(Claims)
+Claims2 <- Claims[order(Claims$op_time,Claims$total),]
+attach(Claims2)
+
+fit <- ssym.l(log(total), formula.mu=~op_time, formula.phi=~op_time, family='Sinh-t',
+              xi=c(0.1,4), local.influence=TRUE)
+summary(fit)
+
+####################### Plot of the fitted model ##############################
+
+yl <- "Amount of paid money"
+xl <- "Operational time"
+rx <- range(op_time)
+ry <- range(total)
+par(mfrow=c(4,2))
+plot(op_time,total,xlim=rx,ylim=ry,type="p",cex=0.3,lwd=3,ylab="",xlab="")
+par(new=TRUE)
+plot(op_time,exp(fit$mu.fitted),xlim=rx,ylim=ry,type="l",ylab=yl,xlab=xl,
+     main="Median")
+
+r <- (log(total) - fit$mu.fitted)^2/fit$xix
+ry <- range(r)
+plot(op_time,r,xlim=rx,ylim=ry,type="p",cex=0.3,lwd=3,ylab="",xlab="")
+par(new=TRUE)
+plot(op_time,fit$phi.fitted,xlim=rx,ylim=ry,type="l",ylab="",xlab=xl,
+     main="Skewness")
+
+########################### Residual analysis ##################################
+
+m1 <- "Residuals for the median submodel"
+res.dev.mu <- sqrt(fit$deviance.mu)*ifelse(fit$z.hat>=0,1,-1)
+ry <- c(min(res.dev.mu,-3.5),max(res.dev.mu,3.5))
+plot(op_time,res.dev.mu,cex=0.3,lwd=3,ylim=ry,main=m1,xlab=xl,ylab="")
+abline(h=-3,lty=3)
+abline(h=+3,lty=3)
+m2 <- "Residuals for the skewness submodel"
+res.dev.phi <- sqrt(fit$deviance.phi)*ifelse(fit$z.hat>=0,1,-1)
+ry <- c(min(res.dev.phi,-3.5),max(res.dev.phi,3.5))
+plot(op_time,res.dev.phi,cex=0.3,lwd=3,ylim=ry,main=m2,xlab=xl,ylab="")
 abline(h=-3,lty=3)
 abline(h=+3,lty=3)
 

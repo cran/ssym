@@ -13,7 +13,7 @@ p <- length(start)
 
 GradD <- function(vP){jacobian(mu,vP[1:p])}
 if(missingArg(epsilon)) epsilon <- 0.0000001
-if(missingArg(maxiter)) maxiter <- 500
+if(missingArg(maxiter)) maxiter <- 1000
 if(missingArg(start.lambda)) start.lambda <- 1
 if(missingArg(subset)) subset <- 1:length(response)
 
@@ -148,6 +148,7 @@ if(family=="Sinh-normal"){
 	fgf <- function(z){
 	       dshn(z)*z^2}
 	xix <- 2*integrate(fgf,0,20)$value
+	fg2 <- fg
 }	
 
 if(family=="Sinh-t"){
@@ -189,6 +190,11 @@ if(family=="Sinh-t"){
 	fgf <- function(z){
 	       dsht(z)*z^2/(2*integrate(dsht,0,80)$value)}
 	xix <- 2*integrate(fgf,0,50)$value
+	dshn <- function(z){
+	2*cosh(z)*exp(-(2/alpha^2)*(sinh(z))^2)/(alpha*sqrt(2*pi))}
+ 	fgf <- function(z){
+	dshn(z)*(4*sinh(z)*cosh(z)/(alpha^2) - tanh(z))^2*z^2}
+	fg2 <- 2*integrate(fgf,0,60)$value
 }
 
 if(family=="Hyperbolic"){
@@ -261,11 +267,11 @@ if(family=="Slash"){
 
 
 if(l>0){
-objeto <- list(epsilon=epsilon,maxiter=maxiter,p=p,l=l,q=q,mu=mu,GradD=GradD,y=y,W=W,v=v,dg=dg,fg=fg,N=matrix(0,3,1),
+objeto <- list(epsilon=epsilon,maxiter=maxiter,p=p,l=l,q=q,qm=0,mu=mu,GradD=GradD,y=y,W=W,v=v,dg=dg,fg=fg,N=matrix(0,3,1),
 M=matrix(0,3,1),lambda=1,subset=subset,family=family)
 }
 else{
-objeto <- list(epsilon=epsilon,maxiter=maxiter,p=p,l=l,q=q,mu=mu,GradD=GradD,y=y,W=matrix(1,n,1),v=v,dg=dg,fg=fg,
+objeto <- list(epsilon=epsilon,maxiter=maxiter,p=p,l=l,q=q,qm=0,mu=mu,GradD=GradD,y=y,W=matrix(1,n,1),v=v,dg=dg,fg=fg,
 N=matrix(0,3,1),M=matrix(0,3,1),lambda=1,subset=subset,family=family)
 }
 
@@ -278,6 +284,7 @@ if(missingArg(lambda)){
   objeto$W_bar <- objeto$W
   if(family=="Sinh-t" | family=="Sinh-normal"){
        objeto$xi <- xi
+	   objeto$K_psi2 <- 4/((fg2-1)*n)
        vP <- itpE2(c(beta0, log(mean((y-mu(beta0)[subset])^2))),objeto)
   }else{
        vP <- itpE(c(beta0, log(mean((y-mu(beta0)[subset])^2))),objeto)
@@ -286,55 +293,54 @@ if(missingArg(lambda)){
   if(l>0) objeto$W <- W
   objeto$l <- l  
   phi.sint <- log((y - mu(vP$theta)[subset])^2)
-  if(l>0) phi.sint <- phi.sint - W%*%solve(t(W)%*%W)%*%t(W)%*%phi.sint
+  if(l>0){
+    W_au <- cbind(W,1,xx,xx^2,xx^3)
+    phi.sint <- phi.sint - W%*%(solve(t(W_au)%*%W_au)%*%t(W_au)%*%phi.sint)[1:l]
+  }
   lambda_est <- lambda.hat(phi.sint,x,xx,start.lambda)
-  lambda <- lambda_est$lambda_hat
+  lambd <- lambda_est$lambda_hat
+}else{lambd <- lambda}
 
-}
   ss <- splinek(x,xx)
   N <- ss$N
   M <- ss$K
   objeto$N <- N
   objeto$M <- M
-  objeto$lambda <- lambda
-  gle <- sum(diag(N%*%solve(t(N)%*%N + lambda*M)%*%t(N)))
+  objeto$lambda.phi <- lambd
+  gle <- sum(diag(N%*%solve(t(N)%*%N + lambd*M)%*%t(N)))
 }
-if(q>0){
-  if(missingArg(lambda)){
-	if(l==0) {theta0 <- c(vP$theta[1:p], rep(vP$theta[(p+1)],q))}
-	else{theta0 <- c(vP$theta[1:p], rep(0,l), rep(vP$theta[(p+1)],q))}
-  }
-  else{
-	if(l==0) {theta0 <- c(beta0, rep(0,q))}
-	else{theta0 <- c(beta0, rep(0,l), rep(0,q))}
-  }
-}
-if(q==0){
-  if(missingArg(formula.phi)){
-  		aa <- log(mean((y-mu(beta0)[subset])^2))
-        theta0 <- c(beta0, aa)
-  }
-  else{
-     aa <- log(mean((y-mu(beta0)[subset])^2))
-	 if(l>1) theta0 <- c(beta0, aa, rep(0,l-1))
-	 if(l==1) theta0 <- c(beta0, aa)	 
-  }
-}	   
+		if(q>0){
+		  if(missingArg(lambda)){
+			if(l==0) {theta0 <- c(vP$theta[1:p], rep(vP$theta[(p+1)],q))}
+			if(l>0){theta0 <- c(vP$theta[1:p], rep(0,l), rep(vP$theta[(p+1)],q))}
+		  }
+		  else{
+			if(l==0) {theta0 <- c(beta0, rep(mean(log((y-mu(beta0)[subset])^2/xix)),q))}
+			if(l>0) {theta0 <- c(beta0, rep(0,l), rep(mean(log((y-mu(beta0)[subset])^2/xix)),q))}
+		  }
+		}
+		if(q==0){
+		  if(missingArg(formula.phi)){
+		        theta0 <- c(beta0, mean(log((y-mu(beta0)[subset])^2/xix)))
+		  }
+		  else{
+		     aa <- solve(t(W)%*%W)%*%t(W)%*%(log((y-mu(beta0)[subset])^2/xix))
+			 theta0 <- c(beta0, aa)
+		  }
+		}	   
+
+
+	  if(q>0){ lambda <- lambd}
 
 	if(l>0){
 	  if(q>0){
 			W_bar <- cbind(W,objeto$N)
 			K_psi <- t(W_bar)%*%W_bar
 			if(family=="Sinh-t" | family=="Sinh-normal"){
-			    dshn <- function(z){
-	            2*cosh(z)*exp(-(2/alpha^2)*(sinh(z))^2)/(alpha*sqrt(2*pi))}
- 	            fgf <- function(z){
-	            dshn(z)*(4*sinh(z)*cosh(z)/(alpha^2) - tanh(z))^2*z^2}
-	            fg2 <- 2*integrate(fgf,0,60)$value
-				K_psi[(l+1):(l+q),(l+1):(l+q)] <- K_psi[(l+1):(l+q),(l+1):(l+q)] + (4*objeto$lambda/(fg2-1))*objeto$M
+				K_psi[(l+1):(l+q),(l+1):(l+q)] <- K_psi[(l+1):(l+q),(l+1):(l+q)] + (4*objeto$lambda.phi/(fg2-1))*objeto$M
 			    K_psi2 <- solve(((fg2-1)/4)*K_psi)
             }else{
-				K_psi[(l+1):(l+q),(l+1):(l+q)] <- K_psi[(l+1):(l+q),(l+1):(l+q)] + (2*objeto$lambda)*objeto$M
+				K_psi[(l+1):(l+q),(l+1):(l+q)] <- K_psi[(l+1):(l+q),(l+1):(l+q)] + (2*objeto$lambda.phi)*objeto$M
 			    K_psi2 <- solve((1/2)*K_psi)
 			}   
 	  }
@@ -342,11 +348,6 @@ if(q==0){
 	    W_bar <- W
 		K_psi <- t(W_bar)%*%W_bar	
 	    if(family=="Sinh-t" | family=="Sinh-normal"){
-			    dshn <- function(z){
-	            2*cosh(z)*exp(-(2/alpha^2)*(sinh(z))^2)/(alpha*sqrt(2*pi))}
- 	            fgf <- function(z){
-	            dshn(z)*(4*sinh(z)*cosh(z)/(alpha^2) - tanh(z))^2*z^2}
-	            fg2 <- 2*integrate(fgf,0,60)$value
 		        K_psi2 <- solve(((fg2-1)/4)*K_psi)
 		}else{
 		     K_psi2 <- solve((1/2)*K_psi)		     
@@ -357,15 +358,10 @@ if(q==0){
 	  if(q>0){
 			W_bar <- objeto$N
 			if(family=="Sinh-t" | family=="Sinh-normal"){
-				dshn <- function(z){
-	            2*cosh(z)*exp(-(2/alpha^2)*(sinh(z))^2)/(alpha*sqrt(2*pi))}
- 	            fgf <- function(z){
-	            dshn(z)*(4*sinh(z)*cosh(z)/(alpha^2) - tanh(z))^2*z^2}
-	            fg2 <- 2*integrate(fgf,0,60)$value
-				K_psi <- t(W_bar)%*%W_bar + (4*objeto$lambda/(fg2-1))*objeto$M
+				K_psi <- t(W_bar)%*%W_bar + (4*objeto$lambda.phi/(fg2-1))*objeto$M
 			    K_psi2 <- solve(((fg2-1)/4)*K_psi)
             }else{
-				K_psi <- t(W_bar)%*%W_bar + (2*objeto$lambda)*objeto$M
+				K_psi <- t(W_bar)%*%W_bar + (2*objeto$lambda.phi)*objeto$M
 			    K_psi2 <- solve((1/2)*K_psi)
 			}   
 	  }
@@ -393,9 +389,9 @@ mues <- mu(beta)[objeto$subset]
 			psi <- theta[(p+1):length(theta)]
 			W_bar <- cbind(W,objeto$N)
 			U_psi <- (1/2)*t(W_bar)%*%(v(z)*z^2-1)
-			U_psi[(l+1):length(psi)] <- U_psi[(l+1):length(psi)] - objeto$lambda*objeto$M%*%h
+			U_psi[(l+1):length(psi)] <- U_psi[(l+1):length(psi)] - objeto$lambda.phi*objeto$M%*%h
 			K_psi <- t(W_bar)%*%W_bar	
-			K_psi[(l+1):length(psi),(l+1):length(psi)] <- K_psi[(l+1):length(psi),(l+1):length(psi)] + (4*objeto$lambda/(fg-1))*objeto$M
+			K_psi[(l+1):length(psi),(l+1):length(psi)] <- K_psi[(l+1):length(psi),(l+1):length(psi)] + (4*objeto$lambda.phi/(fg-1))*objeto$M
 	    	K_psi <- ((fg-1)/4)*K_psi
 	    	K_psi2 <- solve(K_psi)
 		
@@ -419,8 +415,8 @@ mues <- mu(beta)[objeto$subset]
 		    phi.es <- exp(objeto$N%*%h)
 			z <- (y-mues)/sqrt(phi.es)
 			W_bar <- objeto$N
-			U_psi <- (1/2)*t(W_bar)%*%(v(z)*z^2-1) - objeto$lambda*objeto$M%*%h
-			K_psi <- t(W_bar)%*%W_bar + (4*objeto$lambda/(fg-1))*objeto$M
+			U_psi <- (1/2)*t(W_bar)%*%(v(z)*z^2-1) - objeto$lambda.phi*objeto$M%*%h
+			K_psi <- t(W_bar)%*%W_bar + (4*objeto$lambda.phi/(fg-1))*objeto$M
 		    K_psi <- ((fg-1)/4)*K_psi
 		    K_psi2 <- solve(K_psi)
 	  }
@@ -497,19 +493,19 @@ if(!missingArg(local.influence)){
 	
 	if(q>0){
       if(l>0){
-      salida <- list(p=p,l=l,q=q,gle=gle,coefs.mu=ajuste$theta[1:p],vcov.mu=vcov.beta,filas=names(beta0),coefs.phi=ajuste$theta[(p+1):(p+l+q)],se.phi=se.psi,
-	  filas2=colnames(W),z.hat=z.hat,xi=xi,lambda=lambda,family=family,v=v(z.hat),dg=dg,fg=fg, cdfz=cdfz(z.hat),mu.fitted=mues, phi.fitted=phi.es,deviance.mu=deviance.mu(z.hat),
+      salida <- list(p=p,l=l,q=q,qm=0,gle.phi=gle,coefs.mu=ajuste$theta[1:p],se.mu=sqrt(diag(vcov.beta)),filas=names(beta0),coefs.phi=ajuste$theta[(p+1):(p+l+q)],se.phi=se.psi,
+	  filas2=colnames(W),z.hat=z.hat,xi=xi,lambda.phi=lambda,family=family,v=v(z.hat),dg=dg,fg=fg, cdfz=cdfz(z.hat),mu.fitted=mues, phi.fitted=phi.es,deviance.mu=deviance.mu(z.hat),
 	  deviance.phi=deviance.phi(z.hat),cw=cbind(cw,cw2),pr=cbind(pr,pr2),h=h,lpdf=lpdf(z.hat,phi.es),xix=xix,call="")
 	  }
       if(l==0){
-      salida <- list(p=p,l=l,q=q,gle=gle,coefs.mu=ajuste$theta[1:p],vcov.mu=vcov.beta,filas=names(beta0),z.hat=(y-mues)/sqrt(phi.es),xi=xi,lambda=lambda,
+      salida <- list(p=p,l=l,q=q,qm=0,gle.phi=gle,coefs.mu=ajuste$theta[1:p],se.mu=sqrt(diag(vcov.beta)),filas=names(beta0),z.hat=(y-mues)/sqrt(phi.es),xi=xi,lambda.phi=lambda,
 	  family=family,v=v(z.hat),dg=dg,fg=fg,cdfz=cdfz(z.hat),deviance.mu=deviance.mu(z.hat),mu.fitted=mues, phi.fitted=phi.es,deviance.phi=deviance.phi(z.hat),coefs.phi=ajuste$theta[(p+1):(p+q)],se.phi=se.psi,
 	  cw=cbind(cw,cw2),pr=cbind(pr,pr2),h=h,lpdf=lpdf(z.hat,phi.es),xix=xix,call="")
 	  }
     }
     else{
       if(l>0){
-        salida <- list(p=p,l=l,q=q,coefs.mu=ajuste$theta[1:p],vcov.mu=vcov.beta,filas=names(beta0),coefs.phi=ajuste$theta[(p+1):(p+l)],se.phi=se.psi,
+        salida <- list(p=p,l=l,q=q,qm=0,coefs.mu=ajuste$theta[1:p],se.mu=sqrt(diag(vcov.beta)),filas=names(beta0),coefs.phi=ajuste$theta[(p+1):(p+l)],se.phi=se.psi,
 		filas2=colnames(W),z.hat=z.hat,xi=xi,family=family,v=v(z.hat),dg=dg,fg=fg,cdfz=cdfz(z.hat),mu.fitted=mues, phi.fitted=phi.es,deviance.mu=deviance.mu(z.hat),
 		deviance.phi=deviance.phi(z.hat),cw=cbind(cw,cw2),pr=cbind(pr,pr2),h=h,lpdf=lpdf(z.hat,phi.es),xix=xix,call="")
 	  }
@@ -518,19 +514,19 @@ if(!missingArg(local.influence)){
 else{
 	if(q>0){
 	 if(l>0){
-	 salida <- list(p=p,l=l,q=q,gle=gle,coefs.mu=ajuste$theta[1:p],vcov.mu=vcov.beta,filas=names(beta0),coefs.phi=ajuste$theta[(p+1):(p+l+q)],se.phi=se.psi,
-	 filas2=colnames(W),z.hat=z.hat,xi=xi,lambda=lambda,family=family,v=v(z.hat),dg=dg,fg=fg,cdfz=cdfz(z.hat),mu.fitted=mues, phi.fitted=phi.es,deviance.mu=deviance.mu(z.hat),
+	 salida <- list(p=p,l=l,q=q,qm=0,gle.phi=gle,coefs.mu=ajuste$theta[1:p],se.mu=sqrt(diag(vcov.beta)),filas=names(beta0),coefs.phi=ajuste$theta[(p+1):(p+l+q)],se.phi=se.psi,
+	 filas2=colnames(W),z.hat=z.hat,xi=xi,lambda.phi=lambda,family=family,v=v(z.hat),dg=dg,fg=fg,cdfz=cdfz(z.hat),mu.fitted=mues, phi.fitted=phi.es,deviance.mu=deviance.mu(z.hat),
 	 deviance.phi=deviance.phi(z.hat),h=h,lpdf=lpdf(z.hat,phi.es),xix=xix,call="")
 		}
 	 if(l==0){
-	 salida <- list(p=p,l=l,q=q,gle=gle,coefs.mu=ajuste$theta[1:p],vcov.mu=vcov.beta,filas=names(beta0),z.hat=(y-mues)/sqrt(phi.es),xi=xi,lambda=lambda,
+	 salida <- list(p=p,l=l,q=q,qm=0,gle.phi=gle,coefs.mu=ajuste$theta[1:p],se.mu=sqrt(diag(vcov.beta)),filas=names(beta0),z.hat=(y-mues)/sqrt(phi.es),xi=xi,lambda.phi=lambda,
 	 family=family,v=v(z.hat),dg=dg,fg=fg,cdfz=cdfz(z.hat),deviance.mu=deviance.mu(z.hat),mu.fitted=mues, phi.fitted=phi.es,deviance.phi=deviance.phi(z.hat), coefs.phi=ajuste$theta[(p+1):(p+q)],se.phi=se.psi,
 	 h=h,lpdf=lpdf(z.hat,phi.es),xix=xix,call="")
 		}
 	}
 	else{
 	 if(l>0){
-	 salida <- list(p=p,l=l,q=q,coefs.mu=ajuste$theta[1:p],vcov.mu=vcov.beta,filas=names(beta0),coefs.phi=ajuste$theta[(p+1):(p+l)],se.phi=se.psi,filas2=colnames(W),
+	 salida <- list(p=p,l=l,q=q,qm=0,coefs.mu=ajuste$theta[1:p],se.mu=sqrt(diag(vcov.beta)),filas=names(beta0),coefs.phi=ajuste$theta[(p+1):(p+l)],se.phi=se.psi,filas2=colnames(W),
 	 z.hat=z.hat,xi=xi,family=family,v=v(z.hat),dg=dg,fg=fg,cdfz=cdfz(z.hat),mu.fitted=mues, phi.fitted=phi.es,deviance.mu=deviance.mu(z.hat),deviance.phi=deviance.phi(z.hat),
      h=h,lpdf=lpdf(z.hat,phi.es),xix=xix,call="")
 		}

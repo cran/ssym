@@ -6,7 +6,7 @@ xxi <- object$xi
 if(familia=='Normal'){
 cat("\n     Family: ",familia,"\n")}
 else{
-cat("\n     Family: ",familia," (",xxi,")\n")}
+cat("\n     Family: ",familia,"(",xxi,")\n")}
 cat("Sample size: ",length(object$deviance.mu),"\n\n")
 
 cat(" Quantile of the Weights\n")
@@ -16,23 +16,33 @@ colnames(cmat) <- c("0%", "25%", "50%", "75%", "100%")
 rownames(cmat) <- ""
 printCoefmat(cmat,digits=3)
 temp2 <- qqnorm(qnorm(object$cdfz),plot.it=FALSE)
-cat("\n Overall goodness of fit: ",round(mean(abs(sort(temp2$x)-sort(temp2$y))),digits=6),"\n")
+cat("\n Overall goodness-of-fit: ",round(mean(abs(sort(temp2$x)-sort(temp2$y))),digits=6),"\n")
 cat(" -2*log-likelihood: ",round(-2*sum(object$lpdf),digits=3),"\n")
 
 							  
-cat("\n\n ************ Location Model ************\n\n")
-
-TAB		 <- cbind(Estimate <- round(object$coefs.mu,digits=5),
-				  StdErr <- round(sqrt(diag(object$vcov.mu)),digits=5),
+cat("\n\n ************ Location Submodel ************\n")
+if(object$p>0){
+TAB		 <- cbind(Estimate <- round(object$coefs.mu[1:object$p],digits=5),
+				  StdErr <- round(object$se.mu[1:object$p],digits=5),
 				  tval <- Estimate/StdErr,
 				  p.value <- 2*pnorm(-abs(tval)))
 colnames(TAB) <- c("Estimate", "Std.Err", "z-value", "Pr(>|z|)")
 rownames(TAB) <- object$filas
-printCoefmat(TAB, P.values=TRUE, has.Pvalue=TRUE,digits=4)
+  cat("\n **** Parametric component\n")		
+printCoefmat(TAB, P.values=TRUE, has.Pvalue=TRUE,digits=4)}
+if(object$qm>0){
+	spar <- object$lambda.mu
+	gle <- object$gle.mu
+	q <- object$qm
+  cat("\n **** Nonparametric component\n")
+  cat("                 knots: ",q,"\n")
+  cat("   smoothing parameter: ",round(spar,digits=4),"\n")
+  cat("    degrees of freedom: ",round(gle,digits=2),"\n")
+}
 cat("\n Deviance: ",round(sum(object$deviance.mu),digits=3))
 
 
-cat("\n\n ************ Dispersion Model ************\n")
+cat("\n\n ************ Dispersion Submodel ************\n")
 if(object$l>0){
         TAB		 <- cbind(Estimate <- round(object$coefs.phi[1:object$l],digits=5),
 				  StdErr <- round(object$se.phi[1:object$l],digits=5),
@@ -40,14 +50,14 @@ if(object$l>0){
 				  p.value <- 2*pnorm(-abs(tval)))
         colnames(TAB) <- c("Estimate", "Std.Err", "z-value", "Pr(>|z|)")
         rownames(TAB) <- object$filas2
-  cat("\n Parametric part\n")		
+  cat("\n **** Parametric component\n")		
 printCoefmat(TAB, P.values=TRUE, has.Pvalue=TRUE,digits=4)		
 }
 if(object$q>0){
-	spar <- object$lambda
-	gle <- object$gle
+	spar <- object$lambda.phi
+	gle <- object$gle.phi
 	q <- object$q
-  cat("\n Nonparametric part\n")
+  cat("\n **** Nonparametric component\n")
   cat("                 knots: ",q,"\n")
   cat("   smoothing parameter: ",round(spar,digits=4),"\n")
   cat("    degrees of freedom: ",round(gle,digits=2),"\n")
