@@ -6,7 +6,11 @@ xxi <- object$xi
 if(familia=='Normal'){
 cat("\n     Family: ",familia,"\n")}
 else{
-cat("\n     Family: ",familia,"(",xxi,")\n")}
+    if(familia=='Contaminated Normal' | familia=='Sinh-t')
+      cat("\n     Family: ",familia,"(",xxi[1],",",xxi[2],")\n")
+	else cat("\n     Family: ",familia,"(",xxi[1],")\n")
+}
+
 cat("Sample size: ",length(object$deviance.mu),"\n\n")
 
 cat(" Quantile of the Weights\n")

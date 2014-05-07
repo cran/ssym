@@ -8,9 +8,9 @@ rvgs(n, family, xi)
 }
 \arguments{
   \item{n}{number of observations.}
-  \item{family}{a description of the distribution to be generated. Supported families include \emph{Normal}, \emph{Student}, \emph{Powerexp},
-                \emph{Hyperbolic}, \emph{Slash}, \emph{Sinh-normal} and \emph{Sinh-t}, which correspond to normal, Student-t, power exponential, symmetric hyperbolic,
-				slash, sinh-normal and sinh-t distributions, respectively.}
+  \item{family}{a description of the error distribution to be used in the model. Supported families include \emph{Normal}, \emph{Student}, \emph{Contnormal},
+               \emph{Powerexp}, \emph{Hyperbolic}, \emph{Slash}, \emph{Sinh-normal} and \emph{Sinh-t}, which correspond to normal, Student-t, contaminated normal,
+			    power exponential, symmetric hyperbolic, slash, sinh-normal and sinh-t distributions, respectively.}
   \item{xi}{a numeric value or numeric vector that represents the extra parameter of the specified distribution.}
 }
 

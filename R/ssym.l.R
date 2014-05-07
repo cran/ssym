@@ -1,10 +1,10 @@
 ssym.l <-
 function(response, formula.mu, ncs.mu, start.lambda.mu, lambda.mu, formula.phi, ncs.phi, start.lambda.phi, lambda.phi, family, xi, epsilon, maxiter, subset, local.influence){
 
-if(family!="Normal" & family!="Slash" & family!="Hyperbolic" & family!="Sinh-t" & family!="Sinh-normal" & family!="Powerexp" & family!="Student")
+if(family!="Normal" & family!="Slash" & family!="Hyperbolic" & family!="Sinh-t" & family!="Sinh-normal" & family!="Contnormal" & family!="Powerexp" & family!="Student")
 stop("family of distributions specified by the user is not supported!!",call.=FALSE)
 
-if(family=="Slash" | family=="Hyperbolic" | family=="Sinh-t" | family=="Sinh-normal" | family=="Powerexp" | family=="Student"){
+if(family=="Slash" | family=="Hyperbolic" | family=="Sinh-t" | family=="Sinh-normal" | family=="Contnormal" | family=="Powerexp" | family=="Student"){
   if(missingArg(xi)) stop("for the family of distributions specified by the user an extra parameter is required!!", call.=FALSE) 
 }
 
@@ -26,7 +26,11 @@ if(missingArg(ncs.mu)){
   else{
   	mf <- model.frame(formula=formula.mu)
   	X <- as.matrix(model.matrix(attr(mf, "terms"), data=mf))[subset,]
-  	colnames(X) <- colnames(model.matrix(attr(mf, "terms"), data=mf))
+	if(!is.matrix(X)){
+	   XX <- matrix(0,n,1)
+	   XX[,1] <- X
+	   X <- XX
+	}
   	p <- ncol(X)
   }
 }
@@ -66,7 +70,11 @@ if(missingArg(ncs.phi)){
   else{
   	mf <- model.frame(formula=formula.phi)
   	W <- as.matrix(model.matrix(attr(mf, "terms"), data=mf))[subset,]
-  	colnames(W) <- colnames(model.matrix(attr(mf, "terms"), data=mf))
+	if(!is.matrix(W)){
+	   WW <- matrix(0,n,1)
+	   WW[,1] <- W
+	   W <- WW
+	}
 	l <- ncol(W)
   }
 }
@@ -81,7 +89,6 @@ else{
 	mf <- model.frame(formula=formula.phi)
 	WW <- model.matrix(attr(mf, "terms"), data=mf)
 	W <- as.matrix(WW[subset,2:ncol(WW)])
-	colnames(W) <- colnames(model.matrix(attr(mf, "terms"), data=mf))[2:ncol(WW)]
 	l <- ncol(W)
    }
 }
@@ -108,6 +115,7 @@ if(family=="Normal"){
 }
 if(family=="Student"){
 	if(xi[1]<=0) stop("the extra parameter must be positive!!",call.=FALSE)
+	family="Student-t"
 	nu <- xi[1]
 	v <- function(z){
 		 (nu + 1)/(nu + z^2)
@@ -127,8 +135,44 @@ if(family=="Student"){
 	xix <- nu/(nu-2)
 	if(nu<=2) xix <- as.null(xix)
 }
+if(family=="Contnormal"){
+	if(xi[1]<=0  | xi[1]>=1) stop("the extra parameters must be within the interval (0, 1)!!",call.=FALSE)
+	if(xi[2]<=0  | xi[2]>=1) stop("the extra parameters must be within the interval (0, 1)!!",call.=FALSE)
+	family="Contaminated Normal"	
+	eta <- xi[1:2]
+	v <- function(z){
+		 (eta[2]^(3/2)*eta[1]*exp(z^2*(1-eta[2])/2) + (1-eta[1]))/(eta[2]^(1/2)*eta[1]*exp(z^2*(1-eta[2])/2) + (1-eta[1]))
+		 
+	}
+	vp <- function(z){
+		  eta[2]^(1/2)*eta[1]*exp(z^2*(1-eta[2])/2)*(1-eta[2])*z*(eta[2]*(1-eta[1]) - (1-eta[1]))/((eta[2]^(1/2)*eta[1]*exp(z^2*(1-eta[2])/2) + (1-eta[1]))^2)
+	}
+	deviance.mu <- function(z){
+	               -2*log(((eta[2]^(1/2)*eta[1]*dnorm(z*sqrt(eta[2])) + (1-eta[1])*dnorm(z))/(eta[2]^(1/2)*eta[1]*dnorm(0) + (1-eta[1])*dnorm(0))))
+				   }
+	tau <-  uniroot(function(x) v(x)*x^2 -1, lower=0, upper=35)$root
+	deviance.phi <- function(z){
+	               -2*log((abs(z/tau))*((eta[2]^(1/2)*eta[1]*dnorm(z*sqrt(eta[2])) + (1-eta[1])*dnorm(z))/(eta[2]^(1/2)*eta[1]*dnorm(tau*sqrt(eta[2])) + (1-eta[1])*dnorm(tau))))
+				   }
+	cdfz <- function(z){
+	        eta[1]*pnorm(z*sqrt(eta[2])) + (1-eta[1])*pnorm(z)
+    }
+	lpdf <- function(z,phi){
+	       log(sqrt(eta[2])*eta[1]*dnorm(z*sqrt(eta[2])) + (1-eta[1])*dnorm(z)) -(1/2)*log(phi)
+
+    }
+	xix <- eta[1]/eta[2] + (1-eta[1])
+ 	dgd <- function(z){
+	       (v(z)*z)^2*(sqrt(eta[2])*eta[1]*dnorm(z*sqrt(eta[2])) + (1-eta[1])*dnorm(z))}
+	dg <- 2*integrate(dgd,0,35)$value
+ 	fgd <- function(z){
+	       (v(z))^2*z^4*(sqrt(eta[2])*eta[1]*dnorm(z*sqrt(eta[2])) + (1-eta[1])*dnorm(z))}
+	fg <- 2*integrate(fgd,0,35)$value
+}
+
 if(family=="Powerexp"){
 	if(xi[1]<=-1  | xi[1]>=1) stop("the extra parameter must be within the interval (-1, 1)!!",call.=FALSE)
+	family="Power Exponential"	
 	kk <- xi[1]
 	v <- function(z){
 		 abs(z)^(-(2*kk/(1+kk)))/(1+kk)
@@ -190,7 +234,7 @@ if(family=="Sinh-normal"){
 }	
 
 if(family=="Sinh-t"){
-   	if(xi[1]<=0 | xi[1]<=0) stop("the extra parameters must be positive!!",call.=FALSE)
+   	if(xi[1]<=0 | xi[2]<=0) stop("the extra parameters must be positive!!",call.=FALSE)
 	alpha <- xi[1]
 	nu <- xi[2]	
 	v <- function(z){
@@ -207,7 +251,7 @@ if(family=="Sinh-t"){
 	dg <- 2*integrate(dgd,0,60)$value
  	fgf <- function(z){
 	       dsht(z)*(4*sinh(z)*cosh(z)*(nu+1)/(alpha^2*nu + 4*sinh(z)*sinh(z)) - tanh(z))^2*z^2/(2*integrate(dsht,0,80)$value)}
-	fg <- 2*integrate(fgf,0,80)$value
+	fg <- 2*integrate(fgf,0,70)$value
     deviance.mu <- function(z){
 				   if(alpha<=2*sqrt(1 + 1/nu)) (nu + 1)*log(1 + 4*(sinh(z))^2/(nu*alpha^2)) - log((cosh(z))^2)
 				   else{
@@ -227,7 +271,7 @@ if(family=="Sinh-t"){
     }
 	fgf <- function(z){
 	       dsht(z)*z^2/(2*integrate(dsht,0,80)$value)}
-	xix <- 2*integrate(fgf,0,80)$value
+	xix <- 2*integrate(fgf,0,50)$value
 	dshn <- function(z){
 	2*cosh(z)*exp(-(2/alpha^2)*(sinh(z))^2)/(alpha*sqrt(2*pi))}
  	fgf <- function(z){
@@ -237,6 +281,7 @@ if(family=="Sinh-t"){
 
 if(family=="Hyperbolic"){
     if(xi[1]<=0) stop("the extra parameter must be positive!!",call.=FALSE)
+	family="Symmetric Hyperbolic"	
 	nu <- xi[1]
 	v <- function(z){
 		 nu/sqrt(1 + z^2)
@@ -327,25 +372,30 @@ if(p>0){
 if(qm>0){
 if(missingArg(lambda.mu)){
   if(p>0) {
-    X_au <- cbind(X,1,xxm,xxm^2,xxm^3)
-  	yres <- y - X%*%(solve(t(X_au)%*%X_au)%*%t(X_au)%*%y)[1:p]
+    X_au <- cbind(X,1,xxm,xxm^2)
+	b_au <- solve(t(X_au)%*%X_au)%*%t(X_au)%*%y
+  	yres <- y - X%*%(b_au[1:p])
+  	yres2 <- (y - X_au%*%b_au)^2
   }
-  if(p==0) yres <- y
-  lambda.mu_est <- lambda.hat(yres,xm,xxm,start.lambda.mu)
-  lambda.mu <- lambda.mu_est$lambda_hat
-}
-  ssm <- splinek(xm,xxm)
+  if(p==0) {
+    X_au <- cbind(1,xxm,xxm^2)
+	b_au <- solve(t(X_au)%*%X_au)%*%t(X_au)%*%y
+  	yres <- y
+  	yres2 <- (y - X_au%*%b_au)^2
+  }
+  lambda.mu_est <- lambda.hat(yres,xxm,start.lambda.mu)
+  lambda.mu <- lambda.mu_est$lambda_hat/median(yres2)
+  l.mu <- lambda.mu*median(yres2)  
+}else{l.mu <- lambda.mu}
+
+  ssm <- splinek(xxm)
   Nm <- ssm$N
   Mm <- ssm$K
-  Hm <- Nm%*%solve(t(Nm)%*%Nm + lambda.mu*Mm)%*%t(Nm)
-  gle.mu <- sum(diag(Hm))
   objeto$Nm <- Nm
   objeto$Mm <- Mm
   objeto$lambda.mu <- lambda.mu
+  Hm <- Nm%*%solve(t(Nm)%*%Nm + l.mu*Mm)%*%t(Nm)
 }
-
-
-
 
 
 if(q>0){
@@ -360,18 +410,18 @@ if(q>0){
 		  if(family=="Sinh-t" | family=="Sinh-normal"){
 		       objeto$xi <- xi
 			   objeto$K_psi2 <- 4/((fg2-1)*n)
-		       vP <- itpE2(c(beta0, rep(0,qm),log(mean((y-mu(beta0)-Hm%*%yres)^2))),objeto)
+		       vP <- itpE2(c(beta0, rep(0,qm),log(mean((y-mu(beta0))^2))),objeto)
 		  }else{
-		       vP <- itpE(c(beta0, rep(0,qm),log(mean((y-mu(beta0)-Hm%*%yres)^2))),objeto)
+		       vP <- itpE(c(beta0, rep(0,qm),log(mean((y-mu(beta0))^2))),objeto)
 		  }
 		  phi.sint <- log((y - mu(vP$theta[1:p])-Nm%*%vP$theta[(p+1):(p+qm)])^2)
 	  }else{
 		  if(family=="Sinh-t" | family=="Sinh-normal"){
 		       objeto$xi <- xi
 			   objeto$K_psi2 <- 4/((fg2-1)*n)
-		       vP <- itpE2(c(rep(mean(y),qm),log(mean((y-Hm%*%yres)^2))),objeto)
+		       vP <- itpE2(c(rep(mean(y),qm),log(mean((y)^2))),objeto)
 		  }else{
-		       vP <- itpE(c(rep(mean(y),qm),log(mean((y-Hm%*%yres)^2))),objeto)
+		       vP <- itpE(c(rep(mean(y),qm),log(mean((y)^2))),objeto)
 		  }
 		  phi.sint <- log((y -Nm%*%vP$theta[(p+1):(p+qm)])^2)
 	   }
@@ -379,10 +429,10 @@ if(q>0){
 	  if(l>0) objeto$W <- W
 	  objeto$l <- l  
 	  if(l>0){
-	    W_au <- cbind(W,1,xx,xx^2,xx^3)
+	    W_au <- cbind(W,1,xx,xx^2)
 	    phi.sint <- phi.sint - W%*%(solve(t(W_au)%*%W_au)%*%t(W_au)%*%phi.sint)[1:l]
 	  }
-	  lambda.phi_est <- lambda.hat(phi.sint,x,xx,start.lambda.phi)
+	  lambda.phi_est <- lambda.hat(phi.sint,xx,start.lambda.phi)
 	  l.phi <- lambda.phi_est$lambda_hat
 	}else{
   	  objeto$q <- 0
@@ -402,14 +452,14 @@ if(q>0){
 	  objeto$l <- l  
 	  phi.sint <- log((y - mu(vP$theta[1:p]))^2)
 	  if(l>0){
-	    W_au <- cbind(W,1,xx,xx^2,xx^3)
+	    W_au <- cbind(W,1,xx,xx^2)
 	    phi.sint <- phi.sint - W%*%(solve(t(W_au)%*%W_au)%*%t(W_au)%*%phi.sint)[1:l]
 	  }
-	  lambda.phi_est <- lambda.hat(phi.sint,x,xx,start.lambda.phi)
-	  l.phi <- lambda.phi_est$lambda_hat
+	  lambda.phi_est <- lambda.hat(phi.sint,xx,start.lambda.phi)
+	  l.phi <- lambda.phi_est$lambda_hat/2
 	}
   }else{l.phi <- lambda.phi}
-  ss <- splinek(x,xx)
+  ss <- splinek(xx)
   N <- ss$N
   M <- ss$K
   objeto$N <- N
@@ -426,16 +476,16 @@ if(p>0){
 			if(l>0){theta0 <- c(vP$theta[1:p], rep(0,l), rep(vP$theta[(p+1)],q))}
 		  }
 		  else{
-			if(l==0) {theta0 <- c(beta0, rep(mean(log((y-mu(beta0))^2/xix)),q))}
-			if(l>0) {theta0 <- c(beta0, rep(0,l), rep(mean(log((y-mu(beta0))^2/xix)),q))}
+			if(l==0) {theta0 <- c(beta0, rep(mean(log((y-mu(beta0))^2)),q))}
+			if(l>0) {theta0 <- c(beta0, rep(0,l), rep(mean(log((y-mu(beta0))^2)),q))}
 		  }
-		}
+		}													
 		if(q==0){
 		  if(missingArg(formula.phi)){
-		        theta0 <- c(beta0, mean(log((y-mu(beta0))^2/xix)))
+		        theta0 <- c(beta0, mean(log((y-mu(beta0))^2/ifelse(is.null(xix),1,xix))))
 		  }
 		  else{
-		     aa <- solve(t(W)%*%W)%*%t(W)%*%(log((y-mu(beta0))^2/xix))
+		     aa <- solve(t(W)%*%W)%*%t(W)%*%(log((y-mu(beta0))^2/ifelse(is.null(xix),1,xix)))
 			 theta0 <- c(beta0, aa)
 		  }
 		}	   
@@ -447,17 +497,17 @@ if(p>0){
 			if(l>0){theta0 <- c(vP$theta[1:(p+qm)], rep(0,l), rep(vP$theta[(p+qm+1)],q))}
 		  }
 		  else{
-			if(l==0) {theta0 <- c(beta0, rep(0,qm),rep(mean(log((y-mu(beta0))^2/xix)),q))}
-			else{theta0 <- c(beta0, rep(0,qm),rep(0,l),rep(mean(log((y-mu(beta0))^2/xix)),q))}
+			if(l==0) {theta0 <- c(beta0, rep(0,qm),rep(mean(log((y-mu(beta0))^2/ifelse(is.null(xix),1,xix))),q))}
+			else{theta0 <- c(beta0, rep(0,qm),rep(0,l),rep(mean(log((y-mu(beta0))^2/ifelse(is.null(xix),1,xix))),q))}
 		  }
 		}
 		if(q==0){
 		  yres <- y - X%*%solve(t(X)%*%X)%*%t(X)%*%y
 		  if(missingArg(formula.phi)){
-		        theta0 <- c(beta0, rep(0,qm),mean(log((y-mu(beta0)-Hm%*%yres)^2/xix)))
+		        theta0 <- c(beta0, rep(0,qm),mean(log((y-mu(beta0)-Hm%*%yres)^2/ifelse(is.null(xix),1,xix))))
 		  }
 		  else{
-		     aa <- solve(t(W)%*%W)%*%t(W)%*%(log((y-mu(beta0)-Hm%*%yres)^2/xix))
+		     aa <- solve(t(W)%*%W)%*%t(W)%*%(log((y-mu(beta0)-Hm%*%yres)^2/ifelse(is.null(xix),1,xix)))
 			 theta0 <- c(beta0, rep(0,qm), aa)
 		  }
 		}	   
@@ -470,17 +520,17 @@ if(p>0){
 			else{theta0 <- c(vP$theta[1:qm], rep(0,l), rep(vP$theta[(qm+1)],q))}
 		  }
 		  else{
-			if(l==0) {theta0 <- c(solve(t(Nm)%*%Nm + lambda.mu*Mm)%*%t(Nm)%*%y, rep(mean(log((y-Hm%*%y)^2/xix)),q))}
-			else{theta0 <- c(solve(t(Nm)%*%Nm + lambda.mu*Mm)%*%t(Nm)%*%y, rep(0,l), rep(mean(log((y-Hm%*%y)^2/xix)),q))}
+			if(l==0) {theta0 <- c(solve(t(Nm)%*%Nm + l.mu*Mm)%*%t(Nm)%*%y, rep(mean(log((y-Hm%*%y)^2/ifelse(is.null(xix),1,xix))),q))}
+			else{theta0 <- c(solve(t(Nm)%*%Nm + l.mu*Mm)%*%t(Nm)%*%y, rep(0,l), rep(mean(log((y-Hm%*%y)^2/ifelse(is.null(xix),1,xix))),q))}
 		  }
 		}
 		if(q==0){
 		  if(missingArg(formula.phi)){
-		        theta0 <- c(solve(t(Nm)%*%Nm + lambda.mu*Mm)%*%t(Nm)%*%y,mean(log((y-Hm%*%y)^2/xix)))
+		        theta0 <- c(solve(t(Nm)%*%Nm + l.mu*Mm)%*%t(Nm)%*%y,mean(log((y-Hm%*%y)^2/ifelse(is.null(xix),1,xix))))
 		  }
 		  else{
-		     aa <- solve(t(W)%*%W)%*%t(W)%*%log((y-Hm%*%y)^2/xix)
-			 if(l>1) theta0 <- c(solve(t(Nm)%*%Nm + lambda.mu*Mm)%*%t(Nm)%*%y, aa)
+		     aa <- solve(t(W)%*%W)%*%t(W)%*%log((y-Hm%*%y)^2/ifelse(is.null(xix),1,xix))
+			 if(l>1) theta0 <- c(solve(t(Nm)%*%Nm + l.mu*Mm)%*%t(Nm)%*%y, aa)
 		  }
 		}	   
 	}
@@ -646,6 +696,10 @@ if(p>0){
 	se.psi <- sqrt(diag(((fg-1)/4)*Kinver%*%(t(W_bar)%*%W_bar)%*%Kinver))
 	escore <- t(D_bar)%*%(v(z)*((y-mues-Nm%*%hm)/phi.es))  - rbind(matrix(0,p,1),lambda.mu*Mm%*%hm)
 	escore <- rbind(escore,U_psi)
+	Nme <- Nm*matrix(1/sqrt(phi.es),length(phi.es),ncol(Nm))
+	Hm <- Nm%*%solve(t(Nme)%*%Nme + lambda.mu*Mm)%*%t(Nme*matrix(1/sqrt(phi.es),length(phi.es),ncol(Nm)))
+    gle.mu <- sum(diag(Hm))
+
   }
 }
 if(p==0){
@@ -701,9 +755,12 @@ if(p==0){
 	se.psi <- sqrt(diag(((fg-1)/4)*Kinver%*%(t(W_bar)%*%W_bar)%*%Kinver))
 	escore <- t(D_bar)%*%(v(z)*((y-Nm%*%hm)/phi.es))  - lambda.mu*Mm%*%hm
 	escore <- rbind(escore,U_psi)
+	Nme <- Nm*matrix(1/sqrt(phi.es),length(phi.es),ncol(Nm))
+	Hm <- Nm%*%solve(t(Nme)%*%Nme + lambda.mu*Mm)%*%t(Nme*matrix(1/sqrt(phi.es),length(phi.es),ncol(Nm)))
+    gle.mu <- sum(diag(Hm))
+
   }
 }
-
 
 if(!missingArg(local.influence)){
     if(family=="Slash"){

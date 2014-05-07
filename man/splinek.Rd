@@ -4,11 +4,10 @@
 \description{
 \bold{splinek} is used to build the incidence matrix, the penalty matrix as well as other interest matrices to approximate functions by natural cubic splines.}
 \usage{
-splinek(x,xx)
+splinek(xx)
 }
 \arguments{
-  \item{xx}{knots of the natural cubic spline, it is a set (ordered ascending) formed by the different values of \emph{t} in the sample.}
-  \item{x}{values of the explanatory variable \emph{t}.}  
+  \item{xx}{values of the explanatory variable \emph{t}.}  
 }
 \value{
 \item{ss}{a list with the incidence matrix, the penalty matrix as well as other interest matrices.}

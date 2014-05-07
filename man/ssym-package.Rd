@@ -10,7 +10,7 @@ This package allows to fit a semiparametric regression model suitable for data s
 Package: \tab ssym\cr
 Type: \tab Package\cr
 Version: \tab 1.0\cr
-Date: \tab 2014-04-15\cr
+Date: \tab 2014-03-30\cr
 License: \tab GPL-2 | GPL-3\cr
 }
 }

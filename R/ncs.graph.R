@@ -1,6 +1,9 @@
 ncs.graph <-
-function(x,g,gam,cont){
+function(xx,g,cont){
 
+	x <- as.numeric(levels(factor(xx)))
+	ss <- splinek(xx)
+    gam <- solve(ss$R)%*%t(ss$Q)%*%g
 	gam <- rbind(0,gam,0)
 	t <- seq(min(x),max(x),length=cont)
 	nodo <- 1

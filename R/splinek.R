@@ -1,6 +1,7 @@
 splinek <-
-function(x,xx){
+function(xx){
 
+	x <- as.numeric(levels(factor(xx)))
 	m <- length(x)
 	n <- length(xx)
 	

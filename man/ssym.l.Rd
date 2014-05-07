@@ -5,13 +5,11 @@
 \bold{ssym.l} is used to fit a semiparametric regression model suitable for 
 data set analysis in which the conditional distribution of the response (or log-response) is 
 symmetric and continuous. In this setup, both location and dispersion
-parameters of the response (or log-response) variable distribution are explicitly modeled, 
-the location using a linear function and the dispersion using a 
-semiparametric function, which is aproximated by a natural cubic spline.}
+parameters of the response (or log-response) variable distribution are explicitly modeled
+through semiparametric functions.}
 \usage{
-ssym.l(response, formula.mu, ncs.mu, start.lambda.mu, lambda.mu, formula.phi,
-       ncs.phi, start.lambda.phi, lambda.phi, family, xi, epsilon, maxiter,
-	   subset, local.influence)
+ssym.l(response, formula.mu, ncs.mu, start.lambda.mu, lambda.mu, formula.phi, ncs.phi,
+start.lambda.phi, lambda.phi, family, xi, epsilon, maxiter, subset, local.influence)
 }
 \arguments{
   \item{response}{the response (or log-response) variable.}
@@ -23,9 +21,9 @@ ssym.l(response, formula.mu, ncs.mu, start.lambda.mu, lambda.mu, formula.phi,
   \item{ncs.phi}{(optional) an explanatory (continuous) variable to be used in the nonparametric function to be fitted to the dispersion parameter.}
   \item{start.lambda.phi}{(optional) a numeric value of starting estimate for the smoothing parameter associated to the location submodel.}
   \item{lambda.phi}{(optional) a numerical value for the smoothing parameter indicating that it is provided by the user rather than estimated from the data.}
-  \item{family}{a description of the error distribution to be used in the model. Supported families include \emph{Normal}, \emph{Student}, \emph{Powerexp},
-                \emph{Hyperbolic}, \emph{Slash}, \emph{Sinh-normal} and \emph{Sinh-t}, which correspond to normal, Student-t, power exponential, symmetric hyperbolic,
-				slash, sinh-normal and sinh-t distributions, respectively.}
+  \item{family}{a description of the error distribution to be used in the model. Supported families include \emph{Normal}, \emph{Student}, \emph{Contnormal},
+               \emph{Powerexp}, \emph{Hyperbolic}, \emph{Slash}, \emph{Sinh-normal} and \emph{Sinh-t}, which correspond to normal, Student-t, contaminated normal,
+			    power exponential, symmetric hyperbolic, slash, sinh-normal and sinh-t distributions, respectively.}
   \item{xi}{a numeric value or numeric vector that represents the extra parameter of the specified error distribution.}
   \item{epsilon}{(optional) positive convergence tolerance. Default value is 0.0000001.}
   \item{maxiter}{(optional) an positive integer giving the maximal number of iterations for the estimating process. Default value is 1000.}
@@ -34,8 +32,8 @@ ssym.l(response, formula.mu, ncs.mu, start.lambda.mu, lambda.mu, formula.phi,
 }
 \details{
 The iterative estimation process for the parameters of interest is based on the Fisher scoring and backfitting algorithms. Because some distributions such as
-Student-t, power exponential, slash and symmetric hyperbolic may be obtained as a scale mixture of normal distributions, the EM algorithm is applied in those cases to
-obtain a more efficient iterative process for the parameter estimation. Further, because the Sinh-t distribution can be obtained as a 
+Student-t, contaminated normal, power exponential, slash and symmetric hyperbolic may be obtained as a scale mixture of normal distributions, the EM algorithm
+is applied in those cases to obtain a more efficient iterative process for the parameter estimation. Further, because the Sinh-t distribution can be obtained as a 
 scale mixture of Sinh-normal distributions, the EM algorithm is also applied in that case to obtain a more efficient iterative process for the parameter estimation.
 The smoothing parameter is chosen using the cross-validation score.
 }
@@ -89,14 +87,12 @@ summary(fit)
 
 ####################### Plot of the fitted model ##############################
 
-par(mfrow=c(4,2))
+par(mfrow=c(1,2))
 xl <- "Week"
 rx <- range(week)
 ry <- range(texture)
 h <- fit$coefs.mu[5:length(fit$coefs.mu)]
-ss <- splinek(as.numeric(levels(factor(week))),week)
-gam <- solve(ss$R)%*%t(ss$Q)%*%h
-sa <- ncs.graph(as.numeric(levels(factor(week))),h,gam,1000)
+sa <- ncs.graph(week,h,1000)
 
 plot(week,texture,xlim=rx,ylim=ry,type="p",cex=0.3,lwd=3,ylab="",xlab="")
 par(new=TRUE)
@@ -110,7 +106,7 @@ legend(rx[1],ry[2],lty=1:5,bty="n",legend=paste("snack",1:5))
 
 r <- (log(texture) - fit$mu.fitted)^2/fit$xix
 ry <- range(r)
-plot(week,r,xlim=rx,ylim=ry,type="p",cex=0.3,lwd=3,ylab="",xlab=xl,main="Median")
+plot(week,r,xlim=rx,ylim=ry,type="p",cex=0.3,lwd=3,ylab="",xlab=xl,main="Skewness")
 for(i in 1:5){
 	abline(h=mean(fit$phi.fitted[snack==i]), lty=i)
 }
@@ -118,6 +114,7 @@ legend(rx[1],ry[2],lty=1:5,bty="n",legend=paste("snack",1:5))
 
 ########################### Residual analysis ##################################
 
+par(mfrow=c(1,2))
 m1 <- "Residuals for the median submodel"
 res.dev.mu <- sqrt(fit$deviance.mu)*ifelse(fit$z.hat>=0,1,-1)
 ry <- c(min(res.dev.mu,-3.5),max(res.dev.mu,3.5))
@@ -133,15 +130,81 @@ abline(h=+3,lty=3)
 
 ########################### Sensitivity analysis ##################################
 
+par(mfrow=c(1,2))
 m1 <- "Local Influence under case-weight perturbation scheme"
 m2 <- "Total Local Influence under case-weight perturbation scheme"
 plot(fit$cw[,1], type="h", main=m1, xlab="Index", ylab="")
 plot(fit$cw[,2], type="h", main=m2, xlab="Index", ylab="")
 
-m1 <- "Local Influence under response perturbation scheme"
-m2 <- "Total Local Influence under response perturbation scheme"
-plot(fit$pr[,1], type="h", main=m1, xlab="Index", ylab="")
-plot(fit$pr[,2], type="h", main=m2, xlab="Index", ylab="")
+###################################################################################
+########### Fraction of Cell Volume Data - a Power-exponential model  ###########
+###################################################################################
+
+data(Ovocytes)
+attach(Ovocytes)
+type <- factor(type)
+
+fit <- ssym.l(fraction, formula.mu=~type, ncs.mu=time, formula.phi=~type,
+              family="Powerexp", xi=-0.22, local.influence=TRUE)
+summary(fit)
+
+####################### Plot of the fitted model ##############################
+
+par(mfrow=c(1,2))
+xl <- "Time"
+rx <- range(time)
+ry <- range(fraction)
+h <- fit$coefs.mu[2:length(fit$coefs.mu)]
+sa <- ncs.graph(time,h,1000)
+
+plot(time[type=='Mature'],fraction[type=='Mature'],xlim=rx,ylim=ry,type="p",
+     cex=0.5,lwd=1,ylab="",xlab="")
+par(new=TRUE)
+plot(time[type=='Immature'],fraction[type=='Immature'],xlim=rx,ylim=ry,
+     type="p",cex=0.5,lwd=2,ylab="",xlab="")
+par(new=TRUE)
+plot(sa[,1],(sa[,2]),xlim=rx,ylim=ry,type="l",ylab="",xlab=xl,lty=1,main="")
+par(new=TRUE)
+plot(sa[,1],(sa[,2] + fit$coefs.mu[1]),xlim=rx,ylim=ry,type="l",ylab="",xlab=xl,
+     lty=1,main="Mean")
+legend(rx[1],ry[2],pt.lwd=c(1,2),bty="n",legend=c("Mature","Immature"),
+       pt.cex=0.5,pch=1)
+
+r <- (fraction - fit$mu.fitted)^2/fit$xix
+ry <- range(r)
+plot(time[type=='Mature'],r[type=='Mature'],xlim=rx,ylim=ry,type="p",cex=0.5,
+     lwd=1,ylab="",xlab="")
+par(new=TRUE)
+plot(time[type=='Immature'],r[type=='Immature'],xlim=rx,ylim=ry,type="p",
+     cex=0.5,lwd=2,ylab="",xlab="",main="Dispersion")
+abline(h=exp(fit$coefs.phi[1]))
+abline(h=exp(fit$coefs.phi[1] + fit$coefs.phi[2]))
+legend(rx[1],ry[2],pt.lwd=c(1,2),bty="n",legend=c("Mature","Immature"),
+       pt.cex=0.5,pch=1)
+
+########################### Residual analysis ##################################
+
+par(mfrow=c(1,2))
+m1 <- "Residuals for the mean submodel"
+res.dev.mu <- sqrt(fit$deviance.mu)*ifelse(fit$z.hat>=0,1,-1)
+ry <- c(min(res.dev.mu,-3.5),max(res.dev.mu,3.5))
+plot(time,res.dev.mu,cex=0.3,lwd=3,ylim=ry,main=m1,xlab=xl,ylab="")
+abline(h=-3,lty=3)
+abline(h=+3,lty=3)
+m2 <- "Residuals for the dispersion submodel"
+res.dev.phi <- sqrt(fit$deviance.phi)*ifelse(fit$z.hat>=0,1,-1)
+ry <- c(min(res.dev.phi,-3.5),max(res.dev.phi,3.5))
+plot(time,res.dev.phi,cex=0.3,lwd=3,ylim=ry,main=m2,xlab=xl,ylab="")
+abline(h=-3,lty=3)
+abline(h=+3,lty=3)
+
+########################### Sensitivity analysis ##################################
+
+par(mfrow=c(1,2))
+m1 <- "Local Influence under case-weight perturbation scheme"
+m2 <- "Total Local Influence under case-weight perturbation scheme"
+plot(fit$cw[,1], type="h", main=m1, xlab="Index", ylab="")
+plot(fit$cw[,2], type="h", main=m2, xlab="Index", ylab="")
 
 #########################################################################################
 ################## Biaxial Fatigue Data - a Birnbaum-Saunders model   ##################
@@ -157,7 +220,6 @@ summary(fit)
 
 ####################### Plot of the fitted model ##############################
 
-par(mfrow=c(3,2))
 xl <- "Work per cycle"
 rx <-range(Work)
 ry <- range(Life)
@@ -175,15 +237,11 @@ abline(h=+3,lty=3)
 
 ########################### Sensitivity analysis ##################################
 
+par(mfrow=c(1,2))
 m1 <- "Local Influence under case-weight perturbation scheme"
 m2 <- "Total Local Influence under case-weight perturbation scheme"
 plot(fit$cw[,1], type="h", main=m1, xlab="Index", ylab="")
 plot(fit$cw[,2], type="h", main=m2, xlab="Index", ylab="")
-
-m1 <- "Local Influence under response perturbation scheme"
-m2 <- "Total Local Influence under response perturbation scheme"
-plot(fit$pr[,1], type="h", main=m1, xlab="Index", ylab="")
-plot(fit$pr[,2], type="h", main=m2, xlab="Index", ylab="")
 
 ###################################################################################
 ############## Personal Claims Data - a Birnbaum-Saunders-t model  ################
@@ -203,7 +261,7 @@ yl <- "Amount of paid money"
 xl <- "Operational time"
 rx <- range(op_time)
 ry <- range(total)
-par(mfrow=c(4,2))
+par(mfrow=c(1,2))
 plot(op_time,total,xlim=rx,ylim=ry,type="p",cex=0.3,lwd=3,ylab="",xlab="")
 par(new=TRUE)
 plot(op_time,exp(fit$mu.fitted),xlim=rx,ylim=ry,type="l",ylab=yl,xlab=xl,
@@ -218,6 +276,7 @@ plot(op_time,fit$phi.fitted,xlim=rx,ylim=ry,type="l",ylab="",xlab=xl,
 
 ########################### Residual analysis ##################################
 
+par(mfrow=c(1,2))
 m1 <- "Residuals for the median submodel"
 res.dev.mu <- sqrt(fit$deviance.mu)*ifelse(fit$z.hat>=0,1,-1)
 ry <- c(min(res.dev.mu,-3.5),max(res.dev.mu,3.5))
@@ -233,37 +292,9 @@ abline(h=+3,lty=3)
 
 ########################### Sensitivity analysis ##################################
 
+par(mfrow=c(1,2))
 m1 <- "Local Influence under case-weight perturbation scheme"
 m2 <- "Total Local Influence under case-weight perturbation scheme"
 plot(fit$cw[,1], type="h", main=m1, xlab="Index", ylab="")
 plot(fit$cw[,2], type="h", main=m2, xlab="Index", ylab="")
-
-m1 <- "Local Influence under response perturbation scheme"
-m2 <- "Total Local Influence under response perturbation scheme"
-plot(fit$pr[,1], type="h", main=m1, xlab="Index", ylab="")
-plot(fit$pr[,2], type="h", main=m2, xlab="Index", ylab="")
-
-########################################################################################
-######### Gross Domestic Product per capita Data - a Birnbaum-Saunders model ###########
-#########################################################################################
-
-data(gdp)
-attach(gdp)
-gdp2010 <- sort(gdp2010)
-
-fit <- ssym.l(log(gdp2010), family='Sinh-normal', xi=2.2)
-summary(fit)
-
-xl <- "GDP per capita 2010"
-par(mfrow=c(1,2))
-hist(gdp2010,xlim=range(gdp2010),ylim=c(0,0.00015),prob=TRUE,breaks=55,col="light gray",
-     border="dark gray",xlab="",main="",ylab="")
-par(new=TRUE)
-plot(gdp2010,exp(fit$lpdf)/gdp2010,xlim=range(gdp2010),ylim=c(0,0.00015),type="l",
-     xlab=xl,ylab="",main="Histogram")
-
-plot(gdp2010,fit$cdfz,xlim=range(gdp2010),ylim=c(0,1),type="l",xlab="",ylab="")
-par(new=TRUE)
-plot(ecdf(gdp2010),xlim=range(gdp2010),ylim=c(0,1),verticals=TRUE,do.points=FALSE,
-     col="dark gray",xlab=xl,main="ecdf")
 }

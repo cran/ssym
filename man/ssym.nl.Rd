@@ -7,7 +7,7 @@ data set analysis in which the conditional distribution of the response (or log-
 symmetric and continuous. In this setup, both location and dispersion
 parameters of the response (or log-response) variable distribution are explicitly modeled, 
 the location using a nonlinear function and the dispersion using a 
-semiparametric function, which is aproximated by a natural cubic spline.}
+semiparametric function.}
 \usage{
 ssym.nl(response, mu, start, formula.phi, ncs, start.lambda, lambda, family, xi,
        epsilon, maxiter, subset, local.influence)
@@ -15,14 +15,14 @@ ssym.nl(response, mu, start, formula.phi, ncs, start.lambda, lambda, family, xi,
 \arguments{
   \item{response}{the response (or log-response) variable.}
   \item{mu}{an R function with the nonlinear model that describes the location parameter of the response (or log-response) variable distribution.}
-  \item{start}{(optional) a named numeric vector of starting estimates.}
+  \item{start}{a named numeric vector of starting estimates.}
   \item{formula.phi}{(optional) a symbolic description of the parametric function to be fitted to the dispersion parameter.}
   \item{ncs}{(optional) an explanatory (continuous) variable to be used in the nonparametric function to be fitted to the dispersion parameter.}
   \item{start.lambda}{(optional) a numeric value of starting estimate for the smoothing parameter.}
   \item{lambda}{(optional) a numerical value for the smoothing parameter indicating that it is provided by the user rather than estimated from the data.}
-  \item{family}{a description of the error distribution to be used in the model. Supported families include \emph{Normal}, \emph{Student}, \emph{Powerexp},
-                \emph{Hyperbolic}, \emph{Slash}, \emph{Sinh-normal} and \emph{Sinh-t}, which correspond to normal, Student-t, power exponential, symmetric hyperbolic,
-				slash, sinh-normal and sinh-t distributions, respectively.}
+  \item{family}{a description of the error distribution to be used in the model. Supported families include \emph{Normal}, \emph{Student}, \emph{Contnormal},
+               \emph{Powerexp}, \emph{Hyperbolic}, \emph{Slash}, \emph{Sinh-normal} and \emph{Sinh-t}, which correspond to normal, Student-t, contaminated normal,
+			    power exponential, symmetric hyperbolic, slash, sinh-normal and sinh-t distributions, respectively.}
   \item{xi}{a numeric value or numeric vector that represents the extra parameter of the specified error distribution.}
   \item{epsilon}{(optional) positive convergence tolerance. Default value is 0.0000001.}
   \item{maxiter}{(optional) an positive integer giving the maximal number of iterations for the estimating process. Default value is 500.}
@@ -31,8 +31,8 @@ ssym.nl(response, mu, start, formula.phi, ncs, start.lambda, lambda, family, xi,
 }
 \details{
 The iterative estimation process for the parameters of interest is based on the Fisher scoring and backfitting algorithms. Because some distributions such as
-Student-t, power exponential, slash and symmetric hyperbolic may be obtained as a scale mixture of normal distributions, the EM algorithm is applied in those cases to
-obtain a more efficient iterative process for the parameter estimation. Further, because the Sinh-t distribution can be obtained as a 
+Student-t, contaminated normal, power exponential, slash and symmetric hyperbolic may be obtained as a scale mixture of normal distributions, the EM algorithm
+is applied in those cases to obtain a more efficient iterative process for the parameter estimation. Further, because the Sinh-t distribution can be obtained as a 
 scale mixture of Sinh-normal distributions, the EM algorithm is also applied in that case to obtain a more efficient iterative process for the parameter estimation.
 The smoothing parameter is chosen using the cross-validation score.
 }
@@ -85,7 +85,7 @@ summary(fit)
 
 ####################### Plot of the fitted model ##############################
 
-par(mfrow=c(4,2))
+par(mfrow=c(1,2))
 xl <- "Distance to the metal"
 rx <- range(x)
 plot(x,y,xlim=rx,ylim=range(y),type="p",cex=0.3,lwd=3,ylab="",xlab="")
@@ -93,9 +93,7 @@ par(new=TRUE)
 plot(x,exp(fit$mu.fitted),xlim=rx,ylim=range(y),type="l",ylab="",xlab=xl,main="Median")
 
 h <- fit$coefs.phi
-ss <- splinek(as.numeric(levels(factor(x))),x)
-gam <- solve(ss$R)%*%t(ss$Q)%*%h
-sa <- ncs.graph(as.numeric(levels(factor(x))),h,gam,1000)
+sa <- ncs.graph(x,h,1000)
 
 r <- (log(y) - fit$mu.fitted)^2/fit$xix
 plot(x,r,xlim=rx,ylim=range(r),type="p",cex=0.3,lwd=3,ylab="",xlab="")
@@ -104,6 +102,7 @@ plot(sa[,1],exp(sa[,2]),xlim=rx,ylim=range(r),type="l",ylab="",xlab=xl,main="Ske
 
 ########################### Residual analysis ##################################
 
+par(mfrow=c(1,2))
 m1 <- "Residuals for the median submodel"
 res.dev.mu <- sqrt(fit$deviance.mu)*ifelse(fit$z.hat>=0,1,-1)
 yl <- c(min(res.dev.mu,-3.5),max(res.dev.mu,3.5))
@@ -119,15 +118,11 @@ abline(h=+3,lty=3)
 
 ########################### Sensitivity analysis ##################################
 
+par(mfrow=c(1,2))
 m1 <- "Local Influence under case-weight perturbation scheme"
 m2 <- "Total Local Influence under case-weight perturbation scheme"
 plot(fit$cw[,1], type="h", main=m1, xlab="Index", ylab="")
 plot(fit$cw[,2], type="h", main=m2, xlab="Index", ylab="")
-
-m1 <- "Local Influence under response perturbation scheme"
-m2 <- "Total Local Influence under response perturbation scheme"
-plot(fit$pr[,1], type="h", main=m1, xlab="Index", ylab="")
-plot(fit$pr[,2], type="h", main=m2, xlab="Index", ylab="")
 
 #########################################################################################
 ############ European Rabbits Data - a Student-t semiparametric model #############
@@ -148,7 +143,7 @@ summary(fit)
 
 ####################### Plot of the fitted model ##############################
 
-par(mfrow=c(4,2))
+par(mfrow=c(1,2))
 xl <- "Age of the animal (in days)"
 rx <- range(age)
 ry <- range(wlens)
@@ -157,9 +152,7 @@ par(new=TRUE)
 plot(age,fit$mu.fitted,xlim=rx,ylim=ry,type="l",ylab="",xlab=xl,main="Mean")
 
 h <- fit$coefs.phi
-ss <- splinek(as.numeric(levels(factor(age))),age)
-gam <- solve(ss$R)%*%t(ss$Q)%*%h
-sa <- ncs.graph(as.numeric(levels(factor(age))),h,gam,1000)
+sa <- ncs.graph(age,h,1000)
 
 r <- (wlens - fit$mu.fitted)^2/fit$xix
 ry <- range(r)
@@ -169,6 +162,7 @@ plot(sa[,1],exp(sa[,2]),xlim=rx,ylim=ry,type="l",ylab="",xlab=xl,main="Dispersio
 
 ########################### Residual analysis ##################################
 
+par(mfrow=c(1,2))
 m1 <- "Residuals for the mean submodel"
 res.dev.mu <- sqrt(fit$deviance.mu)*ifelse(fit$z.hat>=0,1,-1)
 ry <- c(min(res.dev.mu,-3.5),max(res.dev.mu,3.5))
@@ -184,15 +178,11 @@ abline(h=+3,lty=3)
 
 ########################### Sensitivity analysis ##################################
 
+par(mfrow=c(1,2))
 m1 <- "Local Influence under case-weight perturbation scheme"
 m2 <- "Total Local Influence under case-weight perturbation scheme"
 plot(fit$cw[,1], type="h", main=m1, xlab="Index", ylab="")
 plot(fit$cw[,2], type="h", main=m2, xlab="Index", ylab="")
-
-m1 <- "Local Influence under response perturbation scheme"
-m2 <- "Total Local Influence under response perturbation scheme"
-plot(fit$pr[,1], type="h", main=m1, xlab="Index", ylab="")
-plot(fit$pr[,2], type="h", main=m2, xlab="Index", ylab="")
 
 #########################################################################################
 ####### Australian Institute of Sport Data - a log-normal semiparametric model #########
@@ -204,7 +194,7 @@ data(ais)
 
 sex <- ifelse(ais$sex=="male",1,0)
 ais2 <- data.frame(ais[,8], sex, ais[,11])
-colnames(ais2) <- c("lbm","sex","bmi")
+colnames(ais2) <- c("bmi","sex","lbm")
 ais2 <- ais2[order(ais2$sex,ais2$lbm,ais2$bmi),]
 attach(ais2)
 X <- cbind(1, lbm, sex, lbm*sex)
@@ -215,9 +205,9 @@ location.f <- function(vP){
 }
 
 start = c(8, 0.3, 2, -0.07)
-names(start) <- c("Intercept","lbm","sex","lbm*sex")
-fit <- ssym.nl(log(bmi), mu=location.f, start=start, ~sex, ncs=lbm, lambda=10040.71,
-               family='Normal',	epsilon=0.00001, local.influence=TRUE)
+names(start) <- c("Intercept","lbm","sexMale","lbm*sexMale")
+fit <- ssym.nl(log(bmi), mu=location.f, start=start, ~sex, ncs=lbm, family='Normal',
+               epsilon=0.00001, local.influence=TRUE)
 summary(fit)
 
 ####################### Plot of the fitted model ##############################
@@ -225,7 +215,7 @@ summary(fit)
 xl <- "Lean body mass"
 rx <- range(lbm)
 ry <- range(bmi)
-par(mfrow=c(4,2))
+par(mfrow=c(1,2))
 plot(lbm[sex==0],bmi[sex==0],xlim=rx,ylim=ry,type="p",cex=0.5,lwd=1,ylab="",xlab="")
 par(new=TRUE)
 plot(lbm[sex==1],bmi[sex==1],xlim=rx,ylim=ry,type="p",cex=0.5,lwd=2,ylab="",xlab="")
@@ -237,9 +227,7 @@ plot(lbm[sex==1],exp(fit$mu.fitted[sex==1]),xlim=rx,ylim=ry,type="l",ylab="",
 legend(rx[1],ry[2],pt.cex=0.5,pt.lwd=c(1,2),bty="n",legend=c("Female","Male"),pch=1)
 
 h <- fit$coefs.phi[2:length(fit$coefs.phi)]
-ss <- splinek(as.numeric(levels(factor(lbm))),lbm)
-gam <- solve(ss$R)%*%t(ss$Q)%*%h
-sa <- ncs.graph(as.numeric(levels(factor(lbm))),h,gam,1000)
+sa <- ncs.graph(lbm,h,1000)
 
 r <- (log(bmi) - fit$mu.fitted)^2/fit$xix
 ry <- range(r)
@@ -255,6 +243,7 @@ legend(min(lbm),max(r),pt.cex=0.5,pt.lwd=c(1,2),bty="n",legend=c("Female","Male"
 
 ########################### Residual analysis ##################################
 
+par(mfrow=c(1,2))
 m1 <- "Residuals for the median submodel"
 res.dev.mu <- sqrt(fit$deviance.mu)*ifelse(fit$z.hat>=0,1,-1)
 ry <- c(min(res.dev.mu,-3.5),max(res.dev.mu,3.5))
@@ -270,13 +259,62 @@ abline(h=+3,lty=3)
 
 ########################### Sensitivity analysis ##################################
 
+par(mfrow=c(1,2))
 m1 <- "Local Influence under case-weight perturbation scheme"
 m2 <- "Total Local Influence under case-weight perturbation scheme"
 plot(fit$cw[,1], type="h", main=m1, xlab="Index", ylab="")
 plot(fit$cw[,2], type="h", main=m2, xlab="Index", ylab="")
 
-m1 <- "Local Influence under response perturbation scheme"
-m2 <- "Total Local Influence under response perturbation scheme"
-plot(fit$pr[,1], type="h", main=m1, xlab="Index", ylab="")
-plot(fit$pr[,2], type="h", main=m2, xlab="Index", ylab="")
+########################################################################################
+############### Body Fat percentage Data - a Birnbaum-Saunders-t model #################
+#########################################################################################
+
+library(sn)
+data(ais)
+y <- sort(ais$Bfat)
+
+location.f <- function(vP){rep(vP[1],length(y))}
+
+fit <- ssym.nl(log(y), mu=location.f, start=mean(log(y)), family="Sinh-t", xi=c(4.5,4))
+summary(fit)
+
+xl <- "Body Fat percentage"
+ss <- c(seq(5,10,by=2.5),seq(15,20,by=5),seq(22.5,37.5,by=2.5))
+par(mfrow=c(1,2))
+hist(y,xlim=range(y),ylim=c(0,0.1),prob=TRUE,breaks=ss,col="light gray",
+     border="dark gray",xlab="",main="",ylab="")
+par(new=TRUE)
+plot(y,exp(fit$lpdf)/y,xlim=range(y),ylim=c(0,0.1),type="l",
+     xlab=xl,ylab="",main="Histogram")
+
+plot(y,fit$cdfz,xlim=range(y),ylim=c(0,1),type="l",xlab="",ylab="")
+par(new=TRUE)
+plot(ecdf(y),xlim=range(y),ylim=c(0,1),verticals=TRUE,do.points=FALSE,
+     col="dark gray",xlab=xl,main="ecdf")
+
+########################################################################################
+######### Gross Domestic Product per capita Data - a Birnbaum-Saunders model ###########
+#########################################################################################
+
+data(gdp)
+attach(gdp)
+gdp2010 <- sort(gdp2010)
+
+location.f <- function(vP){rep(vP[1],length(gdp2010))}
+
+fit <- ssym.nl(log(gdp2010), mu=location.f, start=mean(log(gdp2010)), family='Sinh-normal', xi=2.2)
+summary(fit)
+
+xl <- "GDP per capita 2010"
+par(mfrow=c(1,2))
+hist(gdp2010,xlim=range(gdp2010),ylim=c(0,0.00015),prob=TRUE,breaks=55,col="light gray",
+     border="dark gray",xlab="",main="",ylab="")
+par(new=TRUE)
+plot(gdp2010,exp(fit$lpdf)/gdp2010,xlim=range(gdp2010),ylim=c(0,0.00015),type="l",
+     xlab=xl,ylab="",main="Histogram")
+
+plot(gdp2010,fit$cdfz,xlim=range(gdp2010),ylim=c(0,1),type="l",xlab="",ylab="")
+par(new=TRUE)
+plot(ecdf(gdp2010),xlim=range(gdp2010),ylim=c(0,1),verticals=TRUE,do.points=FALSE,
+     col="dark gray",xlab=xl,main="ecdf")
 }

@@ -1,14 +1,14 @@
 lambda.hat <-
-function(response,x,xx,lambda,plot){
-	z <- splinek(x,xx)
+function(response,xx,lambda,plot){
+	z <- splinek(xx)
 	N <- z$N
 	K <- z$K
 	fr <- function(eta){
 		  lambda <- exp(eta)
 	      H <- N%*%solve(t(N)%*%N + lambda*K)%*%t(N)
 	      h <- diag(H)
-	      ajust <- H%*%response
-	      CV<- mean(((response-ajust)/(1-h))^2)
+	      ajust <- H%*%(response)
+	      CV<- mean((((response-ajust)/(1-h))^2))
 	CV
 	}
 	start <- lambda

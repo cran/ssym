@@ -1,10 +1,10 @@
 ssym.nl <-
 function(response, mu, start, formula.phi, ncs, start.lambda, lambda, family, xi, epsilon, maxiter, subset, local.influence){
 
-if(family!="Normal" & family!="Slash" & family!="Hyperbolic" & family!="Sinh-t" & family!="Sinh-normal" & family!="Powerexp" & family!="Student")
+if(family!="Normal" & family!="Slash" & family!="Hyperbolic" & family!="Sinh-t" & family!="Sinh-normal" & family!="Contnormal" & family!="Powerexp" & family!="Student")
 stop("family of distributions specified by the user is not supported!!",call.=FALSE)
 
-if(family=="Slash" | family=="Hyperbolic" | family=="Sinh-t" | family=="Sinh-normal" | family=="Powerexp" | family=="Student"){
+if(family=="Slash" | family=="Hyperbolic" | family=="Sinh-t" | family=="Sinh-normal" | family=="Contnormal" | family=="Powerexp" | family=="Student"){
   if(missingArg(xi)) stop("for the family of distributions specified by the user an extra parameter is required!!", call.=FALSE) 
 }
 
@@ -31,7 +31,11 @@ if(missingArg(ncs)){
   else{
   	mf <- model.frame(formula=formula.phi)
   	W <- as.matrix(model.matrix(attr(mf, "terms"), data=mf))[subset,]
-  	colnames(W) <- colnames(model.matrix(attr(mf, "terms"), data=mf))
+	if(!is.matrix(W)){
+	   WW <- matrix(0,n,1)
+	   WW[,1] <- W
+	   W <- WW
+	}
   	l <- ncol(W)
   }
 }
@@ -46,7 +50,6 @@ else{
 	mf <- model.frame(formula=formula.phi)
 	WW <- model.matrix(attr(mf, "terms"), data=mf)
 	W <- as.matrix(WW[subset,2:ncol(WW)])
-	colnames(W) <- colnames(model.matrix(attr(mf, "terms"), data=mf))[2:ncol(WW)]
 	l <- ncol(W)
    }
 }
@@ -70,6 +73,7 @@ if(family=="Normal"){
 }
 if(family=="Student"){
 	if(xi[1]<=0) stop("the extra parameter must be positive!!",call.=FALSE)
+	family="Student-t"
 	nu <- xi[1]
 	v <- function(z){
 		 (nu + 1)/(nu + z^2)
@@ -89,8 +93,44 @@ if(family=="Student"){
 	xix <- nu/(nu-2)
 	if(nu<=2) xix <- as.null(xix)
 }
+if(family=="Contnormal"){
+	if(xi[1]<=0  | xi[1]>=1) stop("the extra parameters must be within the interval (0, 1)!!",call.=FALSE)
+	if(xi[2]<=0  | xi[2]>=1) stop("the extra parameters must be within the interval (0, 1)!!",call.=FALSE)
+	family="Contaminated Normal"	
+	eta <- xi[1:2]
+	v <- function(z){
+		 (eta[2]^(3/2)*eta[1]*exp(z^2*(1-eta[2])/2) + (1-eta[1]))/(eta[2]^(1/2)*eta[1]*exp(z^2*(1-eta[2])/2) + (1-eta[1]))
+		 
+	}
+	vp <- function(z){
+		  eta[2]^(1/2)*eta[1]*exp(z^2*(1-eta[2])/2)*(1-eta[2])*z*(eta[2]*(1-eta[1]) - (1-eta[1]))/((eta[2]^(1/2)*eta[1]*exp(z^2*(1-eta[2])/2) + (1-eta[1]))^2)
+	}
+	deviance.mu <- function(z){
+	               -2*log(((eta[2]^(1/2)*eta[1]*dnorm(z*sqrt(eta[2])) + (1-eta[1])*dnorm(z))/(eta[2]^(1/2)*eta[1]*dnorm(0) + (1-eta[1])*dnorm(0))))
+				   }
+	tau <-  uniroot(function(x) v(x)*x^2 -1, lower=0, upper=35)$root
+	deviance.phi <- function(z){
+	               -2*log((abs(z/tau))*((eta[2]^(1/2)*eta[1]*dnorm(z*sqrt(eta[2])) + (1-eta[1])*dnorm(z))/(eta[2]^(1/2)*eta[1]*dnorm(tau*sqrt(eta[2])) + (1-eta[1])*dnorm(tau))))
+				   }
+	cdfz <- function(z){
+	        eta[1]*pnorm(z*sqrt(eta[2])) + (1-eta[1])*pnorm(z)
+    }
+	lpdf <- function(z,phi){
+	       log(sqrt(eta[2])*eta[1]*dnorm(z*sqrt(eta[2])) + (1-eta[1])*dnorm(z)) -(1/2)*log(phi)
+
+    }
+	xix <- eta[1]/eta[2] + (1-eta[1])
+ 	dgd <- function(z){
+	       (v(z)*z)^2*(sqrt(eta[2])*eta[1]*dnorm(z*sqrt(eta[2])) + (1-eta[1])*dnorm(z))}
+	dg <- 2*integrate(dgd,0,35)$value
+ 	fgd <- function(z){
+	       (v(z))^2*z^4*(sqrt(eta[2])*eta[1]*dnorm(z*sqrt(eta[2])) + (1-eta[1])*dnorm(z))}
+	fg <- 2*integrate(fgd,0,35)$value
+}
+
 if(family=="Powerexp"){
 	if(xi[1]<=-1  | xi[1]>=1) stop("the extra parameter must be within the interval (-1, 1)!!",call.=FALSE)
+	family="Power Exponential"	
 	kk <- xi[1]
 	v <- function(z){
 		 abs(z)^(-(2*kk/(1+kk)))/(1+kk)
@@ -152,7 +192,7 @@ if(family=="Sinh-normal"){
 }	
 
 if(family=="Sinh-t"){
-   	if(xi[1]<=0 | xi[1]<=0) stop("the extra parameters must be positive!!",call.=FALSE)
+   	if(xi[1]<=0 | xi[2]<=0) stop("the extra parameters must be positive!!",call.=FALSE)
 	alpha <- xi[1]
 	nu <- xi[2]	
 	v <- function(z){
@@ -199,6 +239,7 @@ if(family=="Sinh-t"){
 
 if(family=="Hyperbolic"){
     if(xi[1]<=0) stop("the extra parameter must be positive!!",call.=FALSE)
+	family="Symmetric Hyperbolic"	
 	nu <- xi[1]
 	v <- function(z){
 		 nu/sqrt(1 + z^2)
@@ -294,14 +335,14 @@ if(missingArg(lambda)){
   objeto$l <- l  
   phi.sint <- log((y - mu(vP$theta)[subset])^2)
   if(l>0){
-    W_au <- cbind(W,1,xx,xx^2,xx^3)
+    W_au <- cbind(W,1,xx,xx^2)
     phi.sint <- phi.sint - W%*%(solve(t(W_au)%*%W_au)%*%t(W_au)%*%phi.sint)[1:l]
   }
-  lambda_est <- lambda.hat(phi.sint,x,xx,start.lambda)
-  lambd <- lambda_est$lambda_hat
+  lambda_est <- lambda.hat(phi.sint,xx,start.lambda)
+  lambd <- lambda_est$lambda_hat/2
 }else{lambd <- lambda}
 
-  ss <- splinek(x,xx)
+  ss <- splinek(xx)
   N <- ss$N
   M <- ss$K
   objeto$N <- N
@@ -315,16 +356,16 @@ if(missingArg(lambda)){
 			if(l>0){theta0 <- c(vP$theta[1:p], rep(0,l), rep(vP$theta[(p+1)],q))}
 		  }
 		  else{
-			if(l==0) {theta0 <- c(beta0, rep(mean(log((y-mu(beta0)[subset])^2/xix)),q))}
-			if(l>0) {theta0 <- c(beta0, rep(0,l), rep(mean(log((y-mu(beta0)[subset])^2/xix)),q))}
+			if(l==0) {theta0 <- c(beta0, rep(mean(log((y-mu(beta0)[subset])^2/ifelse(is.null(xix),1,xix))),q))}
+			if(l>0) {theta0 <- c(beta0, rep(0,l), rep(mean(log((y-mu(beta0)[subset])^2/ifelse(is.null(xix),1,xix))),q))}
 		  }
 		}
 		if(q==0){
 		  if(missingArg(formula.phi)){
-		        theta0 <- c(beta0, mean(log((y-mu(beta0)[subset])^2/xix)))
+		        theta0 <- c(beta0, mean(log((y-mu(beta0)[subset])^2/ifelse(is.null(xix),1,xix))))
 		  }
 		  else{
-		     aa <- solve(t(W)%*%W)%*%t(W)%*%(log((y-mu(beta0)[subset])^2/xix))
+		     aa <- solve(t(W)%*%W)%*%t(W)%*%(log((y-mu(beta0)[subset])^2/ifelse(is.null(xix),1,xix)))
 			 theta0 <- c(beta0, aa)
 		  }
 		}	   
