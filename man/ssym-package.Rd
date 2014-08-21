@@ -25,12 +25,9 @@ Maintainer: Luis Hernando Vanegas
 
 \examples{
 data(Snacks)
-Snacks2 <- Snacks[order(Snacks$snack,Snacks$week,Snacks$texture),]
-attach(Snacks2)
+attach(Snacks)
 
-snack <- factor(snack)
-
-fit <- ssym.l(log(texture), formula.mu=~snack, ncs.mu=week, formula.phi=~snack,
-              family='Student', xi=14, local.influence=TRUE)
+fit <- ssym.l(log(texture), formula.mu=~type, ncs.mu=week, formula.phi=~type,
+              family='Slash', xi=2.8, local.influence=TRUE)
 summary(fit)
 }

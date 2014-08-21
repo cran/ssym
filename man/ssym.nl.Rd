@@ -3,23 +3,23 @@
 \title{Fitting Semiparametric Symmetric (or Log-Symmetric) Regression Models}
 \description{
 \bold{ssym.nl} is used to fit a semiparametric regression model suitable for 
-data set analysis in which the conditional distribution of the response (or log-response) is 
+data set analysis in which the conditional distribution of the response is 
 symmetric and continuous. In this setup, both location and dispersion
-parameters of the response (or log-response) variable distribution are explicitly modeled, 
+parameters of the response variable distribution are explicitly modeled, 
 the location using a nonlinear function and the dispersion using a 
 semiparametric function.}
 \usage{
-ssym.nl(response, mu, start, formula.phi, ncs, start.lambda, lambda, family, xi,
-       epsilon, maxiter, subset, local.influence)
+ssym.nl(response, mu, start, formula.phi, ncs.phi, start.lambda.phi, lambda.phi,
+        family, xi,	epsilon, maxiter, subset, local.influence)
 }
 \arguments{
   \item{response}{the response (or log-response) variable.}
   \item{mu}{an R function with the nonlinear model that describes the location parameter of the response (or log-response) variable distribution.}
   \item{start}{a named numeric vector of starting estimates.}
   \item{formula.phi}{(optional) a symbolic description of the parametric function to be fitted to the dispersion parameter.}
-  \item{ncs}{(optional) an explanatory (continuous) variable to be used in the nonparametric function to be fitted to the dispersion parameter.}
-  \item{start.lambda}{(optional) a numeric value of starting estimate for the smoothing parameter.}
-  \item{lambda}{(optional) a numerical value for the smoothing parameter indicating that it is provided by the user rather than estimated from the data.}
+  \item{ncs.phi}{(optional) an explanatory (continuous) variable to be used in the nonparametric function to be fitted to the dispersion parameter.}
+  \item{start.lambda.phi}{(optional) a numeric value of starting estimate for the smoothing parameter.}
+  \item{lambda.phi}{(optional) a numerical value for the smoothing parameter indicating that it is provided by the user rather than estimated from the data.}
   \item{family}{a description of the error distribution to be used in the model. Supported families include \emph{Normal}, \emph{Student}, \emph{Contnormal},
                \emph{Powerexp}, \emph{Hyperbolic}, \emph{Slash}, \emph{Sinh-normal} and \emph{Sinh-t}, which correspond to normal, Student-t, contaminated normal,
 			    power exponential, symmetric hyperbolic, slash, sinh-normal and sinh-t distributions, respectively.}
@@ -34,26 +34,30 @@ The iterative estimation process for the parameters of interest is based on the 
 Student-t, contaminated normal, power exponential, slash and symmetric hyperbolic may be obtained as a scale mixture of normal distributions, the EM algorithm
 is applied in those cases to obtain a more efficient iterative process for the parameter estimation. Further, because the Sinh-t distribution can be obtained as a 
 scale mixture of Sinh-normal distributions, the EM algorithm is also applied in that case to obtain a more efficient iterative process for the parameter estimation.
-The smoothing parameter is chosen using the cross-validation score.
+The smoothing parameter is chosen using the unweighted cross-validation score.
 }
 \value{
 \item{coefs.mu}{a vector of parameter estimates associated with the nonlinear function fitted to the location of the response (or log-response) variable.}
 \item{coefs.phi}{a vector of parameter estimates associated with the semiparametric function fitted to the dispersion of the response (or log-response) variable.}
 \item{se.mu}{approximated standard errors asociated with \emph{coefs.mu}.}
 \item{se.phi}{approximated standard errors asociated with \emph{coefs.phi}.}
-\item{v}{final weights of the iterative process.}
+\item{weights}{final weights of the iterative process.}
 \item{lambda.phi}{estimate for the smoothing parameter.}
-\item{gle.phi}{degrees of freedom associated with the nonparametric part of the model.}
+\item{dfe.phi}{degrees of freedom associated with the nonparametric part of the model.}
 \item{deviance.mu}{a vector of \emph{deviances} associated with the location of the response (or log-response) variable.}
 \item{deviance.phi}{a vector of \emph{deviances} associated with the dispersion of the response (or log-response) variable.}
 \item{mu.fitted}{a vector of fitted values for the location of the response (or log-response) variable.}
 \item{phi.fitted}{a vector of fitted values for the dispersion of the response (or log-response) variable.}
 \item{lpdf}{a vector of individual contributions to the log-likelihood function.}
-\item{pdfz}{a vector of the cumulative distribution function of each individual.}
+\item{cdfz}{a vector of the cumulative distribution function of each individual.}
 \item{cw}{if \emph{local.influence=TRUE}, a matrix of local influence and total local influence measures (under the case-weight perturbation scheme)
-          asociated with \emph{coefs.mu} and based on the conformal normal curvature.}
+                   associated with \emph{coefs.mu} and based on the conformal normal curvature.}
 \item{pr}{if \emph{local.influence=TRUE}, a matrix of local influence and total local influence measures (under the response perturbation scheme)
-          asociated with \emph{coefs.mu} and based on the conformal normal curvature.}
+                   associated with \emph{coefs.mu} and based on the conformal normal curvature.}
+\item{cw.theta}{if \emph{local.influence=TRUE}, a matrix of local influence and total local influence measures (under the case-weight perturbation scheme)
+                asociated with the (entire) vector of parameters and based on the conformal normal curvature.}
+\item{pr.theta}{if \emph{local.influence=TRUE}, a matrix of local influence and total local influence measures (under the response perturbation scheme)
+                asociated with the (entire) vector of parameters and based on the conformal normal curvature.}
 }
 
 \references{Vanegas, L.H. and Paula, G.A. (2014) A Semiparametric Approach for Joint Modeling of Median and Skewness. TEST (submitted)
@@ -100,6 +104,13 @@ plot(x,r,xlim=rx,ylim=range(r),type="p",cex=0.3,lwd=3,ylab="",xlab="")
 par(new=TRUE)
 plot(sa[,1],exp(sa[,2]),xlim=rx,ylim=range(r),type="l",ylab="",xlab=xl,main="Skewness")
 
+################# Weights and Overall goodness-of-fit #########################
+
+par(mfrow=c(1,2))
+plot(fit$z.hat,fit$weights,cex=0.3,lwd=3,main="Weights")
+d1 <- qqnorm(qnorm(fit$cdfz),plot.it=TRUE,main="Overall Goodness-of-fit measure")
+abline(0,1,lty=3)
+
 ########################### Residual analysis ##################################
 
 par(mfrow=c(1,2))
@@ -124,146 +135,11 @@ m2 <- "Total Local Influence under case-weight perturbation scheme"
 plot(fit$cw[,1], type="h", main=m1, xlab="Index", ylab="")
 plot(fit$cw[,2], type="h", main=m2, xlab="Index", ylab="")
 
-#########################################################################################
-############ European Rabbits Data - a Student-t semiparametric model #############
-#########################################################################################
-
-data(Erabbits)
-Erabbits2 <- Erabbits[order(Erabbits$age,Erabbits$wlens),]
-attach(Erabbits2)
-
-loc.f <- function(vP){
-	  beta <- vP[1:3]
-	  exp(beta[1] - beta[2]/(beta[3] + age))
-}
-start <- c(b1=5.6, b2=128, b3=36.45)
-fit <- ssym.nl(wlens,loc.f,start=start,ncs=age,family='Student',xi=5,
-               local.influence=TRUE)
-summary(fit)
-
-####################### Plot of the fitted model ##############################
-
 par(mfrow=c(1,2))
-xl <- "Age of the animal (in days)"
-rx <- range(age)
-ry <- range(wlens)
-plot(age,wlens,xlim=rx,ylim=ry,type="p",cex=0.3,lwd=3,ylab="",xlab="")
-par(new=TRUE)
-plot(age,fit$mu.fitted,xlim=rx,ylim=ry,type="l",ylab="",xlab=xl,main="Mean")
-
-h <- fit$coefs.phi
-sa <- ncs.graph(age,h,1000)
-
-r <- (wlens - fit$mu.fitted)^2/fit$xix
-ry <- range(r)
-plot(age,r,xlim=rx,ylim=ry,type="p",cex=0.3,lwd=3,ylab="",xlab="")
-par(new=TRUE)
-plot(sa[,1],exp(sa[,2]),xlim=rx,ylim=ry,type="l",ylab="",xlab=xl,main="Dispersion")
-
-########################### Residual analysis ##################################
-
-par(mfrow=c(1,2))
-m1 <- "Residuals for the mean submodel"
-res.dev.mu <- sqrt(fit$deviance.mu)*ifelse(fit$z.hat>=0,1,-1)
-ry <- c(min(res.dev.mu,-3.5),max(res.dev.mu,3.5))
-plot(age,res.dev.mu,cex=0.3,lwd=3,ylim=ry,main=m1,xlab=xl,ylab="")
-abline(h=-3,lty=3)
-abline(h=+3,lty=3)
-m2 <- "Residuals for the dispersion submodel"
-res.dev.phi <- sqrt(fit$deviance.phi)*ifelse(fit$z.hat>=0,1,-1)
-ry <- c(min(res.dev.phi,-3.5),max(res.dev.phi,3.5))
-plot(age,res.dev.phi,cex=0.3,lwd=3,ylim=ry,main=m2,xlab=xl,ylab="")
-abline(h=-3,lty=3)
-abline(h=+3,lty=3)
-
-########################### Sensitivity analysis ##################################
-
-par(mfrow=c(1,2))
-m1 <- "Local Influence under case-weight perturbation scheme"
-m2 <- "Total Local Influence under case-weight perturbation scheme"
-plot(fit$cw[,1], type="h", main=m1, xlab="Index", ylab="")
-plot(fit$cw[,2], type="h", main=m2, xlab="Index", ylab="")
-
-#########################################################################################
-####### Australian Institute of Sport Data - a log-normal semiparametric model #########
-#########################################################################################
-
-rm(list=ls())
-library(sn)
-data(ais)
-
-sex <- ifelse(ais$sex=="male",1,0)
-ais2 <- data.frame(ais[,8], sex, ais[,11])
-colnames(ais2) <- c("bmi","sex","lbm")
-ais2 <- ais2[order(ais2$sex,ais2$lbm,ais2$bmi),]
-attach(ais2)
-X <- cbind(1, lbm, sex, lbm*sex)
-
-location.f <- function(vP){
-	beta <- vP[1:4]
-	log(X\%*\%beta)
-}
-
-start = c(8, 0.3, 2, -0.07)
-names(start) <- c("Intercept","lbm","sexMale","lbm*sexMale")
-fit <- ssym.nl(log(bmi), mu=location.f, start=start, ~sex, ncs=lbm, family='Normal',
-               epsilon=0.00001, local.influence=TRUE)
-summary(fit)
-
-####################### Plot of the fitted model ##############################
-
-xl <- "Lean body mass"
-rx <- range(lbm)
-ry <- range(bmi)
-par(mfrow=c(1,2))
-plot(lbm[sex==0],bmi[sex==0],xlim=rx,ylim=ry,type="p",cex=0.5,lwd=1,ylab="",xlab="")
-par(new=TRUE)
-plot(lbm[sex==1],bmi[sex==1],xlim=rx,ylim=ry,type="p",cex=0.5,lwd=2,ylab="",xlab="")
-par(new=TRUE)
-plot(lbm[sex==0],exp(fit$mu.fitted[sex==0]),xlim=rx,ylim=ry,type="l",ylab="",xlab="")
-par(new=TRUE)
-plot(lbm[sex==1],exp(fit$mu.fitted[sex==1]),xlim=rx,ylim=ry,type="l",ylab="",
-     xlab=xl,main="Median")
-legend(rx[1],ry[2],pt.cex=0.5,pt.lwd=c(1,2),bty="n",legend=c("Female","Male"),pch=1)
-
-h <- fit$coefs.phi[2:length(fit$coefs.phi)]
-sa <- ncs.graph(lbm,h,1000)
-
-r <- (log(bmi) - fit$mu.fitted)^2/fit$xix
-ry <- range(r)
-plot(lbm[sex==0],r[sex==0],xlim=rx,ylim=ry,type="p",cex=0.5,lwd=1,ylab="",xlab="")
-par(new=TRUE)
-plot(lbm[sex==1],r[sex==1],xlim=rx,ylim=ry,type="p",cex=0.5,lwd=2,ylab="",xlab="")
-par(new=TRUE)
-plot(sa[,1],exp(sa[,2]),xlim=rx,ylim=ry,type="l",ylab="",xlab="")
-par(new=TRUE)
-plot(sa[,1],exp(sa[,2] + fit$coefs.phi[1]),xlim=rx,ylim=ry,type="l",ylab="",xlab=xl,
-     main="Skewness")
-legend(min(lbm),max(r),pt.cex=0.5,pt.lwd=c(1,2),bty="n",legend=c("Female","Male"),pch=1)
-
-########################### Residual analysis ##################################
-
-par(mfrow=c(1,2))
-m1 <- "Residuals for the median submodel"
-res.dev.mu <- sqrt(fit$deviance.mu)*ifelse(fit$z.hat>=0,1,-1)
-ry <- c(min(res.dev.mu,-3.5),max(res.dev.mu,3.5))
-plot(lbm,res.dev.mu,cex=0.3,lwd=3,ylim=ry,main=m1,xlab=xl,ylab="")
-abline(h=-3,lty=3)
-abline(h=+3,lty=3)
-m2 <- "Residuals for the skewness submodel"
-res.dev.phi <- sqrt(fit$deviance.phi)*ifelse(fit$z.hat>=0,1,-1)
-ry <- c(min(res.dev.phi,-3.5),max(res.dev.phi,3.5))
-plot(lbm,res.dev.phi,cex=0.3,lwd=3,ylim=ry,main=m2,xlab=xl,ylab="")
-abline(h=-3,lty=3)
-abline(h=+3,lty=3)
-
-########################### Sensitivity analysis ##################################
-
-par(mfrow=c(1,2))
-m1 <- "Local Influence under case-weight perturbation scheme"
-m2 <- "Total Local Influence under case-weight perturbation scheme"
-plot(fit$cw[,1], type="h", main=m1, xlab="Index", ylab="")
-plot(fit$cw[,2], type="h", main=m2, xlab="Index", ylab="")
+m1 <- "Local Influence under response perturbation scheme"
+m2 <- "Total Local Influence under response perturbation scheme"
+plot(fit$pr[,1], type="h", main=m1, xlab="Index", ylab="")
+plot(fit$pr[,2], type="h", main=m2, xlab="Index", ylab="")
 
 ########################################################################################
 ############### Body Fat percentage Data - a Birnbaum-Saunders-t model #################
@@ -298,7 +174,6 @@ plot(ecdf(y),xlim=range(y),ylim=c(0,1),verticals=TRUE,do.points=FALSE,
 
 data(gdp)
 attach(gdp)
-gdp2010 <- sort(gdp2010)
 
 location.f <- function(vP){rep(vP[1],length(gdp2010))}
 

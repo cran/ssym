@@ -17,7 +17,7 @@ if(n!=floor(n) | n<=0) stop("n must be a positive integer!!",call.=FALSE)
 	if(family=="Student"){
 		if(xi[1]<=0) stop("the extra parameter must be positive!!",call.=FALSE)
 		rvg <- function(n){
-		      rt(n,df=xi[1])
+		      rnorm(n)/sqrt(rgamma(n,shape=(xi[1]/2),scale=(2/xi[1])))
 		}
 	}
 	if(family=="Contnormal"){

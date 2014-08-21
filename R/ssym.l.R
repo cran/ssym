@@ -241,16 +241,15 @@ if(family=="Sinh-t"){
 		 4*sinh(z)*cosh(z)*(nu+1)/(alpha^2*z*nu + 4*z*sinh(z)*sinh(z)) - tanh(z)/z
 	}
 	vp <- function(z){
-		  ((cosh(z)*z - sinh(z))/z^2)*(4*cosh(z)*(nu+1)/(alpha^2*nu + 4*sinh(z)*sinh(z)) - 1/cosh(z)) +
-		  (sinh(z)/z)*((alpha^2*nu + 4*sinh(z)*sinh(z))*4*(nu+1)*sinh(z) - 32*(nu+1)*cosh(z)*cosh(z)*sinh(z))/(alpha^2*nu + 4*sinh(z)*sinh(z))^2
+	  (4*(nu+1)/z)*((alpha^2*nu + 4*sinh(z)*sinh(z))*(sinh(z)*sinh(z) + cosh(z)*cosh(z)) - 8*sinh(z)*sinh(z)*cosh(z)*cosh(z))/(alpha^2*nu + 4*sinh(z)*sinh(z))^2  - 1/(z*cosh(z)*cosh(z))  - v(z)*z/z^2
 	}
 	dsht <- function(z){
-	        cosh(z)*(1 + 4*(sinh(z))^2/(nu*alpha^2))^(-(nu+1)/2)}
+	        (gamma((nu+1)/2)/(gamma(nu/2)*sqrt(nu*pi)))*(2/alpha)*cosh(z)*(1 + 4*(sinh(z))^2/(nu*alpha^2))^(-(nu+1)/2)}
  	dgd <- function(z){
-	       dsht(z)*(4*sinh(z)*cosh(z)*(nu+1)/(alpha^2*nu + 4*sinh(z)*sinh(z)) - tanh(z))^2/(2*integrate(dsht,0,80)$value)}
+	       dsht(z)*(4*sinh(z)*cosh(z)*(nu+1)/(alpha^2*nu + 4*sinh(z)*sinh(z)) - tanh(z))^2}
 	dg <- 2*integrate(dgd,0,60)$value
  	fgf <- function(z){
-	       dsht(z)*(4*sinh(z)*cosh(z)*(nu+1)/(alpha^2*nu + 4*sinh(z)*sinh(z)) - tanh(z))^2*z^2/(2*integrate(dsht,0,80)$value)}
+	       dsht(z)*(4*sinh(z)*cosh(z)*(nu+1)/(alpha^2*nu + 4*sinh(z)*sinh(z)) - tanh(z))^2*z^2}
 	fg <- 2*integrate(fgf,0,70)$value
     deviance.mu <- function(z){
 				   if(alpha<=2*sqrt(1 + 1/nu)) (nu + 1)*log(1 + 4*(sinh(z))^2/(nu*alpha^2)) - log((cosh(z))^2)
@@ -267,10 +266,10 @@ if(family=="Sinh-t"){
 	}
 	cdfz <- function(z){pt(2*sinh(z)/alpha,nu)}
 	lpdf <- function(z,phi){
-	       log(dsht(z)/(2*integrate(dsht,0,80)$value)) -(1/2)*log(phi)
+	       log(dsht(z)) -(1/2)*log(phi)
     }
 	fgf <- function(z){
-	       dsht(z)*z^2/(2*integrate(dsht,0,80)$value)}
+	       dsht(z)*z^2}
 	xix <- 2*integrate(fgf,0,50)$value
 	dshn <- function(z){
 	2*cosh(z)*exp(-(2/alpha^2)*(sinh(z))^2)/(alpha*sqrt(2*pi))}
@@ -290,12 +289,12 @@ if(family=="Hyperbolic"){
 		  -nu*z/((1 + z^2)^(3/2))
 	}
 	dh <- function(z){
-	      exp(-nu*sqrt(1+z^2))}
+	      exp(-nu*sqrt(1+z^2))/(2*besselK(nu, 1))}
  	dgd <- function(z){
-	       dh(z)*(nu*z/sqrt(1 + z^2))^2/(2*integrate(dh,0,Inf)$value)}
+	       dh(z)*(nu*z/sqrt(1 + z^2))^2}
 	dg <- 2*integrate(dgd,0,Inf)$value
  	fgf <- function(z){
-	       dh(z)*(nu*z^2/sqrt(1 + z^2))^2/(2*integrate(dh,0,Inf)$value)}
+	       dh(z)*(nu*z^2/sqrt(1 + z^2))^2}
 	fg <- 2*integrate(fgf,0,Inf)$value
     deviance.mu <- function(z){2*nu*(sqrt(1+z^2)-1)}
 	tau <- sqrt((1 + sqrt(1 + 4*nu^2))/(2*nu^2))
@@ -304,13 +303,13 @@ if(family=="Hyperbolic"){
 	                    for(gg in 1:length(z)){
                        	    temporal[gg] <- integrate(dh,-Inf,z[gg])$value
 						}
-						temporal/(2*integrate(dh,0,Inf)$value)
+						temporal
     }
 	lpdf <- function(z,phi){
-	       log(dh(z)/(2*integrate(dh,0,Inf)$value)) -(1/2)*log(phi)
+	       log(dh(z)) -(1/2)*log(phi)
     }
 	fgf <- function(z){
-	       dh(z)*z^2/(2*integrate(dh,0,Inf)$value)}
+	       dh(z)*z^2}
 	xix <- 2*integrate(fgf,0,Inf)$value
 }
 
@@ -384,7 +383,7 @@ if(missingArg(lambda.mu)){
   	yres2 <- (y - X_au%*%b_au)^2
   }
   lambda.mu_est <- lambda.hat(yres,xxm,start.lambda.mu)
-  lambda.mu <- lambda.mu_est$lambda_hat/median(yres2)
+  lambda.mu <- dg*lambda.mu_est$lambda_hat/median(yres2)
   l.mu <- lambda.mu*median(yres2)  
 }else{l.mu <- lambda.mu}
 
@@ -412,7 +411,8 @@ if(q>0){
 			   objeto$K_psi2 <- 4/((fg2-1)*n)
 		       vP <- itpE2(c(beta0, rep(0,qm),log(mean((y-mu(beta0))^2))),objeto)
 		  }else{
-		       vP <- itpE(c(beta0, rep(0,qm),log(mean((y-mu(beta0))^2))),objeto)
+			   	if(family=="Power Exponential" && xi<0){vP <- itpE3(c(beta0, rep(0,qm),log(mean((y-mu(beta0))^2))),objeto)}
+		        else{vP <- itpE(c(beta0, rep(0,qm),log(mean((y-mu(beta0))^2))),objeto)}
 		  }
 		  phi.sint <- log((y - mu(vP$theta[1:p])-Nm%*%vP$theta[(p+1):(p+qm)])^2)
 	  }else{
@@ -421,7 +421,8 @@ if(q>0){
 			   objeto$K_psi2 <- 4/((fg2-1)*n)
 		       vP <- itpE2(c(rep(mean(y),qm),log(mean((y)^2))),objeto)
 		  }else{
-		       vP <- itpE(c(rep(mean(y),qm),log(mean((y)^2))),objeto)
+		        if(family=="Power Exponential" && xi<0){vP <- itpE3(c(rep(mean(y),qm),log(mean((y)^2))),objeto)}
+		        else{vP <- itpE(c(rep(mean(y),qm),log(mean((y)^2))),objeto)}
 		  }
 		  phi.sint <- log((y -Nm%*%vP$theta[(p+1):(p+qm)])^2)
 	   }
@@ -445,7 +446,8 @@ if(q>0){
 			   objeto$K_psi2 <- 4/((fg2-1)*n)
 		       vP <- itpE2(c(beta0,log(mean((y-mu(beta0))^2))),objeto)
 		  }else{
-		       vP <- itpE(c(beta0,log(mean((y-mu(beta0))^2))),objeto)
+		       	if(family=="Power Exponential" && xi<0){vP <- itpE3(c(beta0,log(mean((y-mu(beta0))^2))),objeto)}
+		        else{vP <- itpE(c(beta0,log(mean((y-mu(beta0))^2))),objeto)}
 		  }
 	  objeto$q <- q
 	  if(l>0) objeto$W <- W
@@ -456,7 +458,7 @@ if(q>0){
 	    phi.sint <- phi.sint - W%*%(solve(t(W_au)%*%W_au)%*%t(W_au)%*%phi.sint)[1:l]
 	  }
 	  lambda.phi_est <- lambda.hat(phi.sint,xx,start.lambda.phi)
-	  l.phi <- lambda.phi_est$lambda_hat/2
+	  l.phi <- lambda.phi_est$lambda_hat*(fg-1)/4
 	}
   }else{l.phi <- lambda.phi}
   ss <- splinek(xx)
@@ -465,7 +467,7 @@ if(q>0){
   objeto$N <- N
   objeto$M <- M
   objeto$lambda.phi <- l.phi
-  gle <- sum(diag(N%*%solve(t(N)%*%N + l.phi*M)%*%t(N)))
+  gle <- sum(diag(N%*%solve(t(N)%*%N + (l.phi*4/(fg-1))*M)%*%t(N)))
 }
 
 if(p>0){
@@ -543,44 +545,39 @@ if(q>0) lambda.phi <- l.phi
 	  if(q>0){
 			W_bar <- cbind(W,objeto$N)
 			K_psi <- t(W_bar)%*%W_bar
-			if(family=="Sinh-t" | family=="Sinh-normal"){
-				K_psi[(l+1):(l+q),(l+1):(l+q)] <- K_psi[(l+1):(l+q),(l+1):(l+q)] + (4*objeto$lambda.phi/(fg2-1))*objeto$M
-			    K_psi2 <- solve(((fg2-1)/4)*K_psi)
-            }else{
+			if(family!="Sinh-t" & family!="Sinh-normal"){
 				K_psi[(l+1):(l+q),(l+1):(l+q)] <- K_psi[(l+1):(l+q),(l+1):(l+q)] + (2*objeto$lambda.phi)*objeto$M
 			    K_psi2 <- solve((1/2)*K_psi)
+				objeto$K_psi2 <- K_psi2
 			}   
 	  }
 	  if(q==0){
 	    W_bar <- W
 		K_psi <- t(W_bar)%*%W_bar	
-	    if(family=="Sinh-t" | family=="Sinh-normal"){
-		        K_psi2 <- solve(((fg2-1)/4)*K_psi)
-		}else{
-		     K_psi2 <- solve((1/2)*K_psi)		     
+	    if(family!="Sinh-t" & family!="Sinh-normal"){
+		     K_psi2 <- solve((1/2)*K_psi)
+			 objeto$K_psi2 <- K_psi2
 		}
 	  }
 	}
 	if(l==0){
 	  if(q>0){
 			W_bar <- objeto$N
-			if(family=="Sinh-t" | family=="Sinh-normal"){
-				K_psi <- t(W_bar)%*%W_bar + (4*objeto$lambda.phi/(fg2-1))*objeto$M
-			    K_psi2 <- solve(((fg2-1)/4)*K_psi)
-            }else{
+			if(family!="Sinh-t" & family!="Sinh-normal"){
 				K_psi <- t(W_bar)%*%W_bar + (2*objeto$lambda.phi)*objeto$M
 			    K_psi2 <- solve((1/2)*K_psi)
+				objeto$K_psi2 <- K_psi2
 			}   
 	  }
     }
 
-objeto$K_psi2 <- K_psi2
 objeto$W_bar <- W_bar
 if(family=="Sinh-t" | family=="Sinh-normal"){
        objeto$xi <- xi
 	  ajuste <- itpE2(theta0,objeto)
 }else{
-      ajuste <- itpE(theta0,objeto)
+	if(family=="Power Exponential" && xi<0){ajuste <- itpE3(theta0,objeto)}
+	else{ajuste <- itpE(theta0,objeto)}
 }   
 
 
@@ -697,8 +694,8 @@ if(p>0){
 	escore <- t(D_bar)%*%(v(z)*((y-mues-Nm%*%hm)/phi.es))  - rbind(matrix(0,p,1),lambda.mu*Mm%*%hm)
 	escore <- rbind(escore,U_psi)
 	Nme <- Nm*matrix(1/sqrt(phi.es),length(phi.es),ncol(Nm))
-	Hm <- Nm%*%solve(t(Nme)%*%Nme + lambda.mu*Mm)%*%t(Nme*matrix(1/sqrt(phi.es),length(phi.es),ncol(Nm)))
-    gle.mu <- sum(diag(Hm))
+	Hm <- Nme%*%solve(t(Nme)%*%Nme + (lambda.mu/dg)*Mm)%*%t(Nme)
+    dfe.mu <- sum(diag(Hm))
 
   }
 }
@@ -756,8 +753,8 @@ if(p==0){
 	escore <- t(D_bar)%*%(v(z)*((y-Nm%*%hm)/phi.es))  - lambda.mu*Mm%*%hm
 	escore <- rbind(escore,U_psi)
 	Nme <- Nm*matrix(1/sqrt(phi.es),length(phi.es),ncol(Nm))
-	Hm <- Nm%*%solve(t(Nme)%*%Nme + lambda.mu*Mm)%*%t(Nme*matrix(1/sqrt(phi.es),length(phi.es),ncol(Nm)))
-    gle.mu <- sum(diag(Hm))
+	Hm <- Nme%*%solve(t(Nme)%*%Nme + (lambda.mu/dg)*Mm)%*%t(Nme)
+    dfe.mu <- sum(diag(Hm))
 
   }
 }
@@ -798,66 +795,74 @@ if(!missingArg(local.influence)){
 	tl <- tl/sqrt(sum(diag(t(tl)%*%tl)))
 	cw <- abs(eigen(tl,symmetric=TRUE)$vector[,length(y)])
 	cw2 <- abs(diag(tl))
-
+	tl <- t(delta)%*%(solve(Ltt))%*%delta
+	tl <- tl/sqrt(sum(diag(t(tl)%*%tl)))
+	cw.theta <- abs(eigen(tl,symmetric=TRUE)$vector[,length(y)])
+	cw2.theta <- abs(diag(tl))
+	
 	delta1 <- t(D_bar*matrix(Da/phi.es,length(phi.es),p+qm))
 	delta2 <- t(matrix(Dh/sqrt(phi.es),nrow(W_bar),ncol(W_bar))*W_bar)
 	delta <- rbind(delta1,delta2)
 	
 	tl2 <- t(delta)%*%(solve(Ltt)-Ltt2)%*%delta
 	tl2 <- tl2/sqrt(sum(diag(t(tl2)%*%tl2)))
-	pr <- abs(eigen(tl2,symmetric=T)$vector[,length(y)])
+	pr <- abs(eigen(tl2,symmetric=TRUE)$vector[,length(y)])
 	pr2 <- abs(diag(tl2))
+	tl2 <- t(delta)%*%(solve(Ltt))%*%delta
+	tl2 <- tl2/sqrt(sum(diag(t(tl2)%*%tl2)))
+	pr.theta <- abs(eigen(tl2,symmetric=TRUE)$vector[,length(y)])
+	pr2.theta <- abs(diag(tl2))
 	
 	if(p>0){
 	 if(qm>0){
 	   if(l>0){
 	     if(q>0){
-			 salida <- list(p=p,l=l,q=q,qm=qm,gle.phi=gle,gle.mu=gle.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
-			 z.hat=z,xi=xi,lambda.mu=lambda.mu,lambda.phi=lambda.phi,family=family,v=v(z),dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
-			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),filas2=colnames(W),xix=xix,cw=cbind(cw,cw2),pr=cbind(pr,pr2),call="")
+			 salida <- list(p=p,l=l,q=q,qm=qm,dfe.phi=gle,dfe.mu=dfe.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
+			 z.hat=z,xi=xi,lambda.mu=lambda.mu,lambda.phi=lambda.phi,family=family,dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
+			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),filas2=colnames(W),xix=xix,weights=v(z)/dg,score=max(abs(escore)),cw=cbind(cw,cw2),pr=cbind(pr,pr2), cw.theta=cbind(cw.theta,cw2.theta),pr.theta=cbind(pr.theta,pr2.theta),call="")
 		 }
 		 if(q==0){
-			 salida <- list(p=p,l=l,q=q,qm=qm,gle.mu=gle.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
-			 z.hat=z,xi=xi,lambda.mu=lambda.mu,family=family,v=v(z),dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
-			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),filas2=colnames(W),xix=xix,cw=cbind(cw,cw2),pr=cbind(pr,pr2),call="")
+			 salida <- list(p=p,l=l,q=q,qm=qm,dfe.mu=dfe.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
+			 z.hat=z,xi=xi,lambda.mu=lambda.mu,family=family,dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
+			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),filas2=colnames(W),xix=xix,weights=v(z)/dg,score=max(abs(escore)),cw=cbind(cw,cw2),pr=cbind(pr,pr2), cw.theta=cbind(cw.theta,cw2.theta),pr.theta=cbind(pr.theta,pr2.theta),call="")
 		 }
 	   }
 	   if(l==0){
 	     if(q>0){
-			 salida <- list(p=p,l=l,q=q,qm=qm,gle.phi=gle,gle.mu=gle.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
-			 z.hat=z,xi=xi,lambda.mu=lambda.mu,lambda.phi=lambda.phi,family=family,v=v(z),dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
-			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),xix=xix,cw=cbind(cw,cw2),pr=cbind(pr,pr2),call="")
+			 salida <- list(p=p,l=l,q=q,qm=qm,dfe.phi=gle,dfe.mu=dfe.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
+			 z.hat=z,xi=xi,lambda.mu=lambda.mu,lambda.phi=lambda.phi,family=family,dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
+			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),xix=xix,weights=v(z)/dg,score=max(abs(escore)),cw=cbind(cw,cw2),pr=cbind(pr,pr2), cw.theta=cbind(cw.theta,cw2.theta),pr.theta=cbind(pr.theta,pr2.theta),call="")
 		 }
 		 if(q==0){
-			 salida <- list(p=p,l=l,q=q,qm=qm,gle.mu=gle.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
-			 z.hat=z,xi=xi,lambda.mu=lambda.mu,family=family,v=v(z),dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
-			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),xix=xix,cw=cbind(cw,cw2),pr=cbind(pr,pr2),call="")
+			 salida <- list(p=p,l=l,q=q,qm=qm,dfe.mu=dfe.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
+			 z.hat=z,xi=xi,lambda.mu=lambda.mu,family=family,dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
+			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),xix=xix,weights=v(z)/dg,score=max(abs(escore)),cw=cbind(cw,cw2),pr=cbind(pr,pr2), cw.theta=cbind(cw.theta,cw2.theta),pr.theta=cbind(pr.theta,pr2.theta),call="")
 		 }
 	   }
 	 }
 	 if(qm==0){
 	   if(l>0){
 	     if(q>0){
-			 salida <- list(p=p,l=l,q=q,qm=qm,gle.phi=gle,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
-			 z.hat=z,xi=xi,lambda.phi=lambda.phi,family=family,v=v(z),dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
-			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),filas2=colnames(W),xix=xix,cw=cbind(cw,cw2),pr=cbind(pr,pr2),call="")
+			 salida <- list(p=p,l=l,q=q,qm=qm,dfe.phi=gle,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
+			 z.hat=z,xi=xi,lambda.phi=lambda.phi,family=family,dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
+			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),filas2=colnames(W),xix=xix,weights=v(z)/dg,score=max(abs(escore)),cw=cbind(cw,cw2),pr=cbind(pr,pr2), cw.theta=cbind(cw.theta,cw2.theta),pr.theta=cbind(pr.theta,pr2.theta),call="")
 		 }
 		 if(q==0){
 			 salida <- list(p=p,l=l,q=q,qm=qm,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
-			 z.hat=z,xi=xi,family=family,v=v(z),dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
-			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),filas2=colnames(W),xix=xix,cw=cbind(cw,cw2),pr=cbind(pr,pr2),call="")
+			 z.hat=z,xi=xi,family=family,dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
+			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),filas2=colnames(W),xix=xix,weights=v(z)/dg,score=max(abs(escore)),cw=cbind(cw,cw2),pr=cbind(pr,pr2), cw.theta=cbind(cw.theta,cw2.theta),pr.theta=cbind(pr.theta,pr2.theta),call="")
 		 }
 	   }
 	   if(l==0){
 	     if(q>0){
-			 salida <- list(p=p,l=l,q=q,qm=qm,gle.phi=gle,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
-			 z.hat=z,xi=xi,lambda.phi=lambda.phi,family=family,v=v(z),dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
-			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),xix=xix,cw=cbind(cw,cw2),pr=cbind(pr,pr2),call="")
+			 salida <- list(p=p,l=l,q=q,qm=qm,dfe.phi=gle,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
+			 z.hat=z,xi=xi,lambda.phi=lambda.phi,family=family,dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
+			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),xix=xix,weights=v(z)/dg,score=max(abs(escore)),cw=cbind(cw,cw2),pr=cbind(pr,pr2), cw.theta=cbind(cw.theta,cw2.theta),pr.theta=cbind(pr.theta,pr2.theta),call="")
 		 }
 		 if(q==0){
 			 salida <- list(p=p,l=l,q=q,qm=qm,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
-			 z.hat=z,xi=xi,family=family,v=v(z),dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
-			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),xix=xix,cw=cbind(cw,cw2),pr=cbind(pr,pr2),call="")
+			 z.hat=z,xi=xi,family=family,dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
+			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),xix=xix,weights=v(z)/dg,score=max(abs(escore)),cw=cbind(cw,cw2),pr=cbind(pr,pr2), cw.theta=cbind(cw.theta,cw2.theta),pr.theta=cbind(pr.theta,pr2.theta),call="")
 		 }
 	   }
 	 }
@@ -866,26 +871,26 @@ if(!missingArg(local.influence)){
 	 if(qm>0){
 	   if(l>0){
 	     if(q>0){
-			 salida <- list(p=p,l=l,q=q,qm=qm,gle.phi=gle,gle.mu=gle.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
-			 z.hat=z,xi=xi,lambda.mu=lambda.mu,lambda.phi=lambda.phi,family=family,v=v(z),dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
-			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas2=colnames(W),xix=xix,cw=cbind(cw,cw2),pr=cbind(pr,pr2),call="")
+			 salida <- list(p=p,l=l,q=q,qm=qm,dfe.phi=gle,dfe.mu=dfe.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
+			 z.hat=z,xi=xi,lambda.mu=lambda.mu,lambda.phi=lambda.phi,family=family,dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
+			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas2=colnames(W),xix=xix,weights=v(z)/dg,score=max(abs(escore)),cw=cbind(cw,cw2),pr=cbind(pr,pr2), cw.theta=cbind(cw.theta,cw2.theta),pr.theta=cbind(pr.theta,pr2.theta),call="")
 		 }
 		 if(q==0){
-			 salida <- list(p=p,l=l,q=q,qm=qm,gle.mu=gle.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
-			 z.hat=z,xi=xi,lambda.mu=lambda.mu,family=family,v=v(z),dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
-			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas2=colnames(W),xix=xix,cw=cbind(cw,cw2),pr=cbind(pr,pr2),call="")
+			 salida <- list(p=p,l=l,q=q,qm=qm,dfe.mu=dfe.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
+			 z.hat=z,xi=xi,lambda.mu=lambda.mu,family=family,dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
+			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas2=colnames(W),xix=xix,weights=v(z)/dg,score=max(abs(escore)),cw=cbind(cw,cw2),pr=cbind(pr,pr2), cw.theta=cbind(cw.theta,cw2.theta),pr.theta=cbind(pr.theta,pr2.theta),call="")
 		 }
 	   }
 	   if(l==0){
 	     if(q>0){
-			 salida <- list(p=p,l=l,q=q,qm=qm,gle.phi=gle,gle.mu=gle.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
-			 z.hat=z,xi=xi,lambda.mu=lambda.mu,lambda.phi=lambda.phi,family=family,v=v(z),dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
-			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),xix=xix,cw=cbind(cw,cw2),pr=cbind(pr,pr2),call="")
+			 salida <- list(p=p,l=l,q=q,qm=qm,dfe.phi=gle,dfe.mu=dfe.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
+			 z.hat=z,xi=xi,lambda.mu=lambda.mu,lambda.phi=lambda.phi,family=family,dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
+			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),xix=xix,weights=v(z)/dg,score=max(abs(escore)),cw=cbind(cw,cw2),pr=cbind(pr,pr2), cw.theta=cbind(cw.theta,cw2.theta),pr.theta=cbind(pr.theta,pr2.theta),call="")
 		 }
 		 if(q==0){
-			 salida <- list(p=p,l=l,q=q,qm=qm,gle.mu=gle.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
-			 z.hat=z,xi=xi,lambda.mu=lambda.mu,family=family,v=v(z),dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
-			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),xix=xix,cw=cbind(cw,cw2),pr=cbind(pr,pr2),call="")
+			 salida <- list(p=p,l=l,q=q,qm=qm,dfe.mu=dfe.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
+			 z.hat=z,xi=xi,lambda.mu=lambda.mu,family=family,dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
+			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),xix=xix,weights=v(z)/dg,score=max(abs(escore)),cw=cbind(cw,cw2),pr=cbind(pr,pr2), cw.theta=cbind(cw.theta,cw2.theta),pr.theta=cbind(pr.theta,pr2.theta),call="")
 		 }
 	   }
 	 }
@@ -896,52 +901,52 @@ else{
 	 if(qm>0){
 	   if(l>0){
 	     if(q>0){
-			 salida <- list(p=p,l=l,q=q,qm=qm,gle.phi=gle,gle.mu=gle.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
-			 z.hat=z,xi=xi,lambda.mu=lambda.mu,lambda.phi=lambda.phi,family=family,v=v(z),dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
-			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),filas2=colnames(W),xix=xix,call="")
+			 salida <- list(p=p,l=l,q=q,qm=qm,dfe.phi=gle,dfe.mu=dfe.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
+			 z.hat=z,xi=xi,lambda.mu=lambda.mu,lambda.phi=lambda.phi,family=family,dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
+			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),filas2=colnames(W),xix=xix,weights=v(z)/dg,score=max(abs(escore)),call="")
 		 }
 		 if(q==0){
-			 salida <- list(p=p,l=l,q=q,qm=qm,gle.mu=gle.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
-			 z.hat=z,xi=xi,lambda.mu=lambda.mu,family=family,v=v(z),dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
-			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),filas2=colnames(W),xix=xix,call="")
+			 salida <- list(p=p,l=l,q=q,qm=qm,dfe.mu=dfe.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
+			 z.hat=z,xi=xi,lambda.mu=lambda.mu,family=family,dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
+			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),filas2=colnames(W),xix=xix,weights=v(z)/dg,score=max(abs(escore)),call="")
 		 }
 	   }
 	   if(l==0){
 	     if(q>0){
-			 salida <- list(p=p,l=l,q=q,qm=qm,gle.phi=gle,gle.mu=gle.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
-			 z.hat=z,xi=xi,lambda.mu=lambda.mu,lambda.phi=lambda.phi,family=family,v=v(z),dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
-			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),xix=xix,call="")
+			 salida <- list(p=p,l=l,q=q,qm=qm,dfe.phi=gle,dfe.mu=dfe.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
+			 z.hat=z,xi=xi,lambda.mu=lambda.mu,lambda.phi=lambda.phi,family=family,dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
+			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),xix=xix,weights=v(z)/dg,score=max(abs(escore)),call="")
 		 }
 		 if(q==0){
-			 salida <- list(p=p,l=l,q=q,qm=qm,gle.mu=gle.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
-			 z.hat=z,xi=xi,lambda.mu=lambda.mu,family=family,v=v(z),dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
-			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),xix=xix,call="")
+			 salida <- list(p=p,l=l,q=q,qm=qm,dfe.mu=dfe.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
+			 z.hat=z,xi=xi,lambda.mu=lambda.mu,family=family,dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
+			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),xix=xix,weights=v(z)/dg,score=max(abs(escore)),call="")
 		 }
 	   }
 	 }
 	 if(qm==0){
 	   if(l>0){
 	     if(q>0){
-			 salida <- list(p=p,l=l,q=q,qm=qm,gle.phi=gle,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
-			 z.hat=z,xi=xi,lambda.phi=lambda.phi,family=family,v=v(z),dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
-			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),filas2=colnames(W),xix=xix,call="")
+			 salida <- list(p=p,l=l,q=q,qm=qm,dfe.phi=gle,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
+			 z.hat=z,xi=xi,lambda.phi=lambda.phi,family=family,dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
+			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),filas2=colnames(W),xix=xix,weights=v(z)/dg,score=max(abs(escore)),call="")
 		 }
 		 if(q==0){
 			 salida <- list(p=p,l=l,q=q,qm=qm,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
-			 z.hat=z,xi=xi,family=family,v=v(z),dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
-			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),filas2=colnames(W),xix=xix,call="")
+			 z.hat=z,xi=xi,family=family,dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
+			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),filas2=colnames(W),xix=xix,weights=v(z)/dg,score=max(abs(escore)),call="")
 		 }
 	   }
 	   if(l==0){
 	     if(q>0){
-			 salida <- list(p=p,l=l,q=q,qm=qm,gle.phi=gle,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
-			 z.hat=z,xi=xi,lambda.phi=lambda.phi,family=family,v=v(z),dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
-			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),xix=xix,call="")
+			 salida <- list(p=p,l=l,q=q,qm=qm,dfe.phi=gle,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
+			 z.hat=z,xi=xi,lambda.phi=lambda.phi,family=family,dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
+			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),xix=xix,weights=v(z)/dg,score=max(abs(escore)),call="")
 		 }
 		 if(q==0){
 			 salida <- list(p=p,l=l,q=q,qm=qm,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
-			 z.hat=z,xi=xi,family=family,v=v(z),dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
-			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),xix=xix,call="")
+			 z.hat=z,xi=xi,family=family,dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
+			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas=colnames(X),xix=xix,weights=v(z)/dg,score=max(abs(escore)),call="")
 		 }
 	   }
 	 }
@@ -950,26 +955,26 @@ else{
 	 if(qm>0){
 	   if(l>0){
 	     if(q>0){
-			 salida <- list(p=p,l=l,q=q,qm=qm,gle.phi=gle,gle.mu=gle.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
-			 z.hat=z,xi=xi,lambda.mu=lambda.mu,lambda.phi=lambda.phi,family=family,v=v(z),dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
-			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas2=colnames(W),xix=xix,call="")
+			 salida <- list(p=p,l=l,q=q,qm=qm,dfe.phi=gle,dfe.mu=dfe.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
+			 z.hat=z,xi=xi,lambda.mu=lambda.mu,lambda.phi=lambda.phi,family=family,dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
+			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas2=colnames(W),xix=xix,weights=v(z)/dg,score=max(abs(escore)),call="")
 		 }
 		 if(q==0){
-			 salida <- list(p=p,l=l,q=q,qm=qm,gle.mu=gle.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
-			 z.hat=z,xi=xi,lambda.mu=lambda.mu,family=family,v=v(z),dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
-			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas2=colnames(W),xix=xix,call="")
+			 salida <- list(p=p,l=l,q=q,qm=qm,dfe.mu=dfe.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
+			 z.hat=z,xi=xi,lambda.mu=lambda.mu,family=family,dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
+			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),filas2=colnames(W),xix=xix,weights=v(z)/dg,score=max(abs(escore)),call="")
 		 }
 	   }
 	   if(l==0){
 	     if(q>0){
-			 salida <- list(p=p,l=l,q=q,qm=qm,gle.phi=gle,gle.mu=gle.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
-			 z.hat=z,xi=xi,lambda.mu=lambda.mu,lambda.phi=lambda.phi,family=family,v=v(z),dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
-			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),xix=xix,call="")
+			 salida <- list(p=p,l=l,q=q,qm=qm,dfe.phi=gle,dfe.mu=dfe.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
+			 z.hat=z,xi=xi,lambda.mu=lambda.mu,lambda.phi=lambda.phi,family=family,dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
+			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),xix=xix,weights=v(z)/dg,score=max(abs(escore)),call="")
 		 }
 		 if(q==0){
-			 salida <- list(p=p,l=l,q=q,qm=qm,gle.mu=gle.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
-			 z.hat=z,xi=xi,lambda.mu=lambda.mu,family=family,v=v(z),dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
-			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),xix=xix,call="")
+			 salida <- list(p=p,l=l,q=q,qm=qm,dfe.mu=dfe.mu,coefs.mu=ajuste$theta[1:(p+qm)],se.mu=se.beta,coefs.phi=ajuste$theta[(p+qm+1):(p+qm+l+q)],se.phi=se.psi,
+			 z.hat=z,xi=xi,lambda.mu=lambda.mu,family=family,dg=dg,fg=fg,cdfz=cdfz(z),mu.fitted=y-z*sqrt(phi.es), phi.fitted=phi.es,deviance.mu=deviance.mu(z),
+			 deviance.phi=deviance.phi(z),lpdf=lpdf(z,phi.es),xix=xix,weights=v(z)/dg,score=max(abs(escore)),call="")
 		 }
 	   }
 	 }

@@ -4,13 +4,13 @@
 \title{Personal Injure Insurance}
 \description{
 This data set contains information on 540 settled personal injury insurance claims from an Australian insurance company, which is a sample of the original data set. These claims
-had legal representation and arose from accidents occurring from January 1998 through to January 1999.
+had legal representation and arose from accidents occurring from January 1998 through to June 1999.
 }
 \usage{data(Claims)}
 \format{
   A data frame with 540 observations on the following 2 variables.
   \describe{
-    \item{\code{total}}{amount of paid money by an insurance policy in Australian dollars.}
+    \item{\code{total}}{amount of paid money by an insurance policy in thousands of Australian dollars.}
     \item{\code{accmonth}}{month of occurrence of the accident coded 103 (January 1998) through to 120 (June 1999).}
     \item{\code{op_time}}{operational time in percentage.}	
   }

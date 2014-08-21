@@ -14,7 +14,7 @@ else{
 cat("Sample size: ",length(object$deviance.mu),"\n\n")
 
 cat(" Quantile of the Weights\n")
-temp <- round(quantile(object$v/object$dg),digits=2)
+temp <- round(quantile(object$weights),digits=2)
 cmat <- cbind(temp[1], temp[2], temp[3], temp[4], temp[5])
 colnames(cmat) <- c("0%", "25%", "50%", "75%", "100%")
 rownames(cmat) <- ""
@@ -36,7 +36,7 @@ rownames(TAB) <- object$filas
 printCoefmat(TAB, P.values=TRUE, has.Pvalue=TRUE,digits=4)}
 if(object$qm>0){
 	spar <- object$lambda.mu
-	gle <- object$gle.mu
+	gle <- object$dfe.mu
 	q <- object$qm
   cat("\n **** Nonparametric component\n")
   cat("                 knots: ",q,"\n")
@@ -59,7 +59,7 @@ printCoefmat(TAB, P.values=TRUE, has.Pvalue=TRUE,digits=4)
 }
 if(object$q>0){
 	spar <- object$lambda.phi
-	gle <- object$gle.phi
+	gle <- object$dfe.phi
 	q <- object$q
   cat("\n **** Nonparametric component\n")
   cat("                 knots: ",q,"\n")

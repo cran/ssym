@@ -15,9 +15,12 @@ environmental conditions than does total body weight, and therefore may be a muc
   }
 }
 \references{
+Dudzinski, M.L. and Mykytowycz, R. (1961) The eye lens as an indicator of age in the wild rabbit in Australia. CSIRO Wildlife Research, 6: 156-159.
+
 Ratkowsky, D. A. (1983). Nonlinear Regression Modelling. Marcel Dekker, New York.
 
 Wei, B. C. (1998). Exponential Family Nonlinear Models. Springer, Singapore.}
+
 \examples{
 data(Erabbits)
 attach(Erabbits)
