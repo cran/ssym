@@ -1,6 +1,6 @@
 exportPattern("^[[:alpha:]]+")
-#export(rvgs, lambda.hat, splinek, ncs.graph, ssym.nl, ssym.l)
+#export(rvgs, lambda.hat, ncs, psp, np.graph, ssym.nl, ssym.l, influence.ssym, estfun.ssym)
 
-import(GIGrvg, numDeriv, gsl, normalp)
+import(GIGrvg, numDeriv, normalp, Formula, splines)
 
 

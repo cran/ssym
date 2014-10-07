@@ -1,8 +1,10 @@
 lambda.hat <-
-function(response,xx,lambda,plot){
-	z <- splinek(xx)
-	N <- z$N
-	K <- z$K
+function(response,xx,lambda,type,plot){
+	if(type!=1 & type!=2) stop("The type value must be 1 for ncs or 2 for psp!!",call.=FALSE)
+	if(type==1) z <- ncs(xx)
+	if(type==2) z <- psp(xx)
+	N <- attr(z,"N")
+	K <- attr(z,"K")
 	fr <- function(eta){
 		  lambda <- exp(eta)
 	      H <- N%*%solve(t(N)%*%N + lambda*K)%*%t(N)

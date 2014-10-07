@@ -22,9 +22,8 @@ Ratkowsky, D. A. (1983). Nonlinear Regression Modelling. Marcel Dekker, New York
 Wei, B. C. (1998). Exponential Family Nonlinear Models. Springer, Singapore.}
 
 \examples{
-data(Erabbits)
-attach(Erabbits)
-
-plot(age,wlens,xlim=range(age),ylim=range(wlens),type="p",cex=0.3,lwd=3,
-     ylab="Dry weight of eye lens (in milligrams)",xlab="Age of the animal (in days)")
+data("Erabbits", package="ssym")
+plot(Erabbits$age, Erabbits$wlens, xlim=range(Erabbits$age), ylim=range(Erabbits$wlens),
+     type="p", cex=0.3, lwd=3, ylab="Dry weight of eye lens (in milligrams)",
+	 xlab="Age of the animal (in days)")
 }

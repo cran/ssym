@@ -172,7 +172,8 @@ if(p>0){
 	  if(q>0){
 	  	mus_work <- objeto$mu(objeto$theta_work[1:p])
 		hm_work <- objeto$theta_work[(p+1):(p+qm)]		
-		h_work <- objeto$theta_work[(p+qm+1):length(objeto$theta_work)]			
+		h_work <- objeto$theta_work[(p+qm+1):length(objeto$theta_work)]
+		
 		phi_work <- exp(objeto$N%*%h_work)			
 		z_work <- (y-mus_work-objeto$Nm%*%hm_work)/sqrt(phi_work)
 	    while(tol_EM > objeto$epsilon){

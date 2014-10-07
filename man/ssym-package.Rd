@@ -24,10 +24,8 @@ Maintainer: Luis Hernando Vanegas
             Vanegas, L.H. and Paula, G.A. (2014) Log-symmetric distributions: statistical properties and parameter estimation. Brazilian Journal of Probability and Statistics (submitted)}
 
 \examples{
-data(Snacks)
-attach(Snacks)
-
-fit <- ssym.l(log(texture), formula.mu=~type, ncs.mu=week, formula.phi=~type,
-              family='Slash', xi=2.8, local.influence=TRUE)
-summary(fit)
+data("Snacks", package="ssym")                                    
+fit <- ssym.l(log(texture) ~ type + ncs(week) | type, data=Snacks,
+               family='Student', xi=15)     
+summary(fit)                                                      
 }

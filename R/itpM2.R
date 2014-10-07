@@ -188,9 +188,9 @@ if(p>0){
 				psi <- theta[(p+qm+1):length(theta)]
 				U_psi <- (1/2)*t(W_bar)%*%(v2(z)*z^2-1)
 				U_psi[(l+1):length(psi)] <- U_psi[(l+1):length(psi)] - objeto$lambda.phi*objeto$M%*%h
-			    D2 <- D_bar*matrix(1/phi,length(phi),p+qm)
+			    D2 <- D_bar*matrix(dgs/phi,length(phi),p+qm)
 			    D3 <- D_bar*matrix(v2(z)/phi,length(phi),p+qm)			
-				beta_new <- theta[1:(p+qm)] + solve(dg2*t(D_bar)%*%D2 + Kpqm)%*%(t(D3)%*%(y-mus-objeto$Nm%*%hm) - rbind(matrix(0,p,1),objeto$lambda.mu*objeto$Mm%*%hm))
+				beta_new <- theta[1:(p+qm)] + solve(t(D_bar)%*%D2 + Kpqm)%*%(t(D3)%*%(y-mus-objeto$Nm%*%hm) - rbind(matrix(0,p,1),objeto$lambda.mu*objeto$Mm%*%hm))
 			    W_bar2 <- W_bar*matrix((fgs-1)/4,length(phi),ncol(W_bar))
 			    psi_new <- psi +  solve(t(W_bar)%*%W_bar2 + Kpsim)%*%U_psi
 	    		theta_new <- c(t(beta_new),t(psi_new))
@@ -228,9 +228,9 @@ if(p>0){
 				 z <- (y-mus-objeto$Nm%*%hm)/sqrt(phi)			 
 				 psi <- theta[(p+qm+1):length(theta)]
 				 U_psi <- (1/2)*t(W_bar)%*%(v2(z)*z^2-1)
-	 		     D2 <- D_bar*matrix(1/phi,length(phi),p+qm)
+	 		     D2 <- D_bar*matrix(dgs/phi,length(phi),p+qm)
 			     D3 <- D_bar*matrix(v2(z)/phi,length(phi),p+qm)			
-				 beta_new <- theta[1:(p+qm)] + solve(dg2*t(D_bar)%*%D2 + Kpqm)%*%(t(D3)%*%(y-mus-objeto$Nm%*%hm) - rbind(matrix(0,p,1),objeto$lambda.mu*objeto$Mm%*%hm))
+				 beta_new <- theta[1:(p+qm)] + solve(t(D_bar)%*%D2 + Kpqm)%*%(t(D3)%*%(y-mus-objeto$Nm%*%hm) - rbind(matrix(0,p,1),objeto$lambda.mu*objeto$Mm%*%hm))
 			     W_bar2 <- W_bar*matrix((fgs-1)/4,length(phi),ncol(W_bar))
 			     psi_new <- psi + solve(t(W_bar)%*%W_bar2)%*%U_psi
 	     		 theta_new <- c(t(beta_new),t(psi_new))
@@ -272,9 +272,9 @@ if(p>0){
 				z <- (y-mus-objeto$Nm%*%hm)/sqrt(phi)
 				psi <- theta[(p+qm+1):length(theta)]
 				U_psi <- (1/2)*t(W_bar)%*%(v2(z)*z^2-1) - objeto$lambda.phi*objeto$M%*%h
-			    D2 <- D_bar*matrix(1/phi,length(phi),p+qm)
+			    D2 <- D_bar*matrix(dgs/phi,length(phi),p+qm)
 			    D3 <- D_bar*matrix(v2(z)/phi,length(phi),p+qm)			
-			    beta_new <- theta[1:(p+qm)] + solve(dg2*t(D_bar)%*%D2 + Kpqm)%*%(t(D3)%*%(y-mus-objeto$Nm%*%hm) - rbind(matrix(0,p,1),objeto$lambda.mu*objeto$Mm%*%hm))
+			    beta_new <- theta[1:(p+qm)] + solve(t(D_bar)%*%D2 + Kpqm)%*%(t(D3)%*%(y-mus-objeto$Nm%*%hm) - rbind(matrix(0,p,1),objeto$lambda.mu*objeto$Mm%*%hm))
 			    W_bar2 <- W_bar*matrix((fgs-1)/4,length(phi),ncol(W_bar))
 			    psi_new <- psi +  solve(t(W_bar)%*%W_bar2 + Kpsim)%*%U_psi
 	    		theta_new <- c(t(beta_new),t(psi_new))
@@ -321,9 +321,9 @@ if(p==0){
 				psi <- theta[(p+qm+1):length(theta)]
 				U_psi <- (1/2)*t(W_bar)%*%(v2(z)*z^2-1)
 				U_psi[(l+1):length(psi)] <- U_psi[(l+1):length(psi)] - objeto$lambda.phi*objeto$M%*%h
-			    D2 <- D_bar*matrix(1/phi,length(phi),p+qm)
+			    D2 <- D_bar*matrix(dgs/phi,length(phi),p+qm)
 			    D3 <- D_bar*matrix(v2(z)/phi,length(phi),p+qm)			
-				beta_new <- theta[1:(p+qm)] + solve(dg2*t(D_bar)%*%D2 + objeto$lambda.mu*objeto$Mm)%*%(t(D3)%*%(y-objeto$Nm%*%hm) - objeto$lambda.mu*objeto$Mm%*%hm)
+				beta_new <- theta[1:(p+qm)] + solve(t(D_bar)%*%D2 + objeto$lambda.mu*objeto$Mm)%*%(t(D3)%*%(y-objeto$Nm%*%hm) - objeto$lambda.mu*objeto$Mm%*%hm)
 			    W_bar2 <- W_bar*matrix((fgs-1)/4,length(phi),ncol(W_bar))
 			    psi_new <- psi +  solve(t(W_bar)%*%W_bar2 + Kpsim)%*%U_psi
 	    		theta_new <- c(t(beta_new),t(psi_new))
@@ -359,9 +359,9 @@ if(p==0){
 				 z <- (y-objeto$Nm%*%hm)/sqrt(phi)			 
 				 psi <- theta[(p+qm+1):length(theta)]
 				 U_psi <- (1/2)*t(W_bar)%*%(v2(z)*z^2-1)
-	 		     D2 <- D_bar*matrix(1/phi,length(phi),p+qm)
+	 		     D2 <- D_bar*matrix(dgs/phi,length(phi),p+qm)
 			     D3 <- D_bar*matrix(v2(z)/phi,length(phi),p+qm)			
-				 beta_new <- theta[1:(p+qm)] + solve(dg2*t(D_bar)%*%D2 + objeto$lambda.mu*objeto$Mm)%*%(t(D3)%*%(y-objeto$Nm%*%hm) - objeto$lambda.mu*objeto$Mm%*%hm)
+				 beta_new <- theta[1:(p+qm)] + solve(t(D_bar)%*%D2 + objeto$lambda.mu*objeto$Mm)%*%(t(D3)%*%(y-objeto$Nm%*%hm) - objeto$lambda.mu*objeto$Mm%*%hm)
 			     W_bar2 <- W_bar*matrix((fgs-1)/4,length(phi),ncol(W_bar))
 			     psi_new <- psi + solve(t(W_bar)%*%W_bar2)%*%U_psi
 	     		 theta_new <- c(t(beta_new),t(psi_new))
@@ -400,9 +400,9 @@ if(p==0){
 				z <- (y-objeto$Nm%*%hm)/sqrt(phi)
 				psi <- theta[(p+qm+1):length(theta)]
 				U_psi <- (1/2)*t(W_bar)%*%(v2(z)*z^2-1) - objeto$lambda.phi*objeto$M%*%h
-			    D2 <- D_bar*matrix(1/phi,length(phi),p+qm)
+			    D2 <- D_bar*matrix(dgs/phi,length(phi),p+qm)
 			    D3 <- D_bar*matrix(v2(z)/phi,length(phi),p+qm)			
-			    beta_new <- theta[1:(p+qm)] + solve(dg2*t(D_bar)%*%D2 + objeto$lambda.mu*objeto$Mm)%*%(t(D3)%*%(y-objeto$Nm%*%hm) - objeto$lambda.mu*objeto$Mm%*%hm)
+			    beta_new <- theta[1:(p+qm)] + solve(t(D_bar)%*%D2 + objeto$lambda.mu*objeto$Mm)%*%(t(D3)%*%(y-objeto$Nm%*%hm) - objeto$lambda.mu*objeto$Mm%*%hm)
 			    W_bar2 <- W_bar*matrix((fgs-1)/4,length(phi),ncol(W_bar))
 			    psi_new <- psi +  solve(t(W_bar)%*%W_bar2 + Kpsim)%*%U_psi
 	    		theta_new <- c(t(beta_new),t(psi_new))

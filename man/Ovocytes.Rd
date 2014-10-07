@@ -21,18 +21,16 @@ Goat Oocytes as a Model. Cryobiology, 31: 154-170.
 
 Huet S., Bouvier A., Gruet M.A., Jolivet E. (1996) Statistical Tools for Nonlinear Regression. Springer-Verlag: New York.}
 \examples{
-data(Ovocytes)
-attach(Ovocytes)
+data("Ovocytes", package="ssym")
 xl <- "Time"
 yl <- "Fraction of Cell Volume"
 mm <- "Fraction of Cell Volume for Mature and Immature Goat Ovocytes"
-rx <- range(time)
-ry <- range(fraction)
-plot(time[type=='Mature'],fraction[type=='Mature'],xlim=rx,ylim=ry,
-     type="p",cex=0.5,lwd=1,ylab="",xlab="")
+rx <- range(Ovocytes$time)
+ry <- range(Ovocytes$fraction)
+plot(Ovocytes$time[Ovocytes$type=='Mature'], Ovocytes$fraction[Ovocytes$type=='Mature'],
+     xlim=rx, ylim=ry, type="p", cex=0.5, lwd=1, ylab="", xlab="")
 par(new=TRUE)
-plot(time[type=='Immature'],fraction[type=='Immature'],xlim=rx,
-     ylim=ry,type="p",cex=0.5,lwd=2,ylab=yl,xlab=xl,main=mm)
-legend(rx[1],ry[2],pt.lwd=c(1,2),bty="n",legend=c("Mature","Immature"),
-       pt.cex=0.5,pch=1)
+plot(Ovocytes$time[Ovocytes$type=='Immature'], Ovocytes$fraction[Ovocytes$type=='Immature'],
+     xlim=rx, ylim=ry, type="p", cex=0.5, lwd=2, ylab=yl, xlab=xl, main=mm)
+legend(rx[1], ry[2], pt.lwd=c(1,2), bty="n", legend=c("Mature","Immature"), pt.cex=0.5, pch=1)
 }

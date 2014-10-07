@@ -21,10 +21,8 @@ de Jong P, Heller GZ. Generalized Linear Models for Insurance Data. Cambridge Un
 Paula, G.A., Leiva, V., Barros, M. and Liu, S. (2012) Robust statistical modeling using the Birnbaum-Saunders-t distribution applied to insurance distribution, Applied Stochastic Model in Business and Industry, 28:16-34.
 }
 \examples{
-data(Claims)
-attach(Claims)
-
-plot(op_time,total,xlim=range(op_time),ylim=range(total),type="p",cex=0.3,lwd=3,
-     ylab="Amount of paid money",xlab="Operational time",
+data("Claims", package="ssym")
+plot(Claims$op_time, Claims$total, xlim=range(Claims$op_time), ylim=range(Claims$total),
+     type="p", cex=0.3, lwd=3, ylab="Amount of paid money",xlab="Operational time",
 	 main="Personal Injure Insurance Data")
 }

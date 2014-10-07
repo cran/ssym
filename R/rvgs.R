@@ -5,7 +5,7 @@ if(family!="Normal" & family!="Slash" & family!="Hyperbolic" & family!="Sinh-t" 
 stop("family of distributions specified by the user is not supported!!",call.=FALSE)
 
 if(family=="Slash" | family=="Hyperbolic" | family=="Sinh-t" | family=="Sinh-normal" | family=="Contnormal" | family=="Powerexp" | family=="Student"){
-  if(missingArg(xi)) stop("for the family of distributions specified by the user an extra parameter is required!!", call.=FALSE) 
+  if(missingArg(xi)) stop("for the family of distributions specified by the user an extra parameter value is required!!", call.=FALSE) 
 }
 if(n!=floor(n) | n<=0) stop("n must be a positive integer!!",call.=FALSE)
 
@@ -54,7 +54,7 @@ if(n!=floor(n) | n<=0) stop("n must be a positive integer!!",call.=FALSE)
 	if(family=="Hyperbolic"){
 	    if(xi[1]<=0) stop("the extra parameter must be positive!!",call.=FALSE)
 		rvg <- function(n){
-               sqrt(rgig(n, lambda=1, chi=1, psi=xi[1]))*rnorm(n)
+               sqrt(rgig(n, lambda=1, chi=1, psi=xi[1]*xi[1]))*rnorm(n)
 		}
 	}
 	

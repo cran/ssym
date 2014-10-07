@@ -24,7 +24,6 @@ Applied Statistics, University of Sao Paulo (in Portuguese).
 
 Paula, G.A. (2013) On diagnostics in double generalized linear models. Computational Statistics and Data Analysis, 68: 44-51.}
 \examples{
-data(Snacks)
-attach(Snacks)
-boxplot(log(texture)~type,xlab="Type of Snack",ylab="Log(texture)")
+data("Snacks", package="ssym")
+boxplot(log(Snacks$texture) ~ Snacks$type, xlab="Type of Snack", ylab="Log(texture)")
 }

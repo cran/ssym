@@ -1,5 +1,5 @@
 ssym.nl <-
-function(response, mu, start, formula.phi, ncs.phi, start.lambda.phi, lambda.phi, family, xi, epsilon, maxiter, subset, local.influence){
+function(formula, start, family, xi, data, epsilon, maxiter, subset, local.influence){
 
 if(family!="Normal" & family!="Slash" & family!="Hyperbolic" & family!="Sinh-t" & family!="Sinh-normal" & family!="Contnormal" & family!="Powerexp" & family!="Student")
 stop("family of distributions specified by the user is not supported!!",call.=FALSE)
@@ -7,52 +7,115 @@ stop("family of distributions specified by the user is not supported!!",call.=FA
 if(family=="Slash" | family=="Hyperbolic" | family=="Sinh-t" | family=="Sinh-normal" | family=="Contnormal" | family=="Powerexp" | family=="Student"){
   if(missingArg(xi)) stop("for the family of distributions specified by the user an extra parameter is required!!", call.=FALSE) 
 }
+	 reem <- function(aa,b){
+		 ag <- aa
+		 ag <- sub("(", "", ag,fixed=TRUE)
+		 ag <- sub(")", "", ag,fixed=TRUE)
+		 ag <- sub(b, "", ag,fixed=TRUE)
+		 ag <- strsplit(ag, ",")
+		 ag <- ag[[1]][1]
+		 ag
+	 }
 
+if(missingArg(epsilon)) epsilon <- 0.0000001
+if(missingArg(maxiter)) maxiter <- 1000
+
+
+	 mf <- match.call(expand.dots = FALSE)
+	 m <- match(c("formula"), names(mf), 0)
+	 mf <- mf[c(1, m)]
+
+     if (missingArg(data)) 
+        data <- environment(formula)
+
+	if(sum(is.na(match(names(start),all.vars(formula))))>0)
+	stop("Some of the specified parameters in the option Start do not appear in the nonlinear function to be fitted!!",call.=FALSE)
+
+	 formula <- Formula(formula)
+	 if (length(formula)[2L] < 2L)
+        formula <- as.Formula(formula(formula), ~1)
+
+	nl <- formula(formula, lhs=0, rhs=1)
+	ll <- formula(formula, lhs=1, rhs=2)
+
+
+	response <- as.matrix(eval(ll[[2]], data))
+
+	 if(missingArg(subset)) subset <- 1:length(response)
+
+	 w <- model.matrix(ll, data)
+	 wa <- "ncs("
+	 wa2 <- "psp("	 
+	 wb <- colnames(w)
+	 idw <- grepl(wa,wb,fixed=TRUE)
+	 idw2 <- grepl(wa2,wb,fixed=TRUE)
+	 
+	 if(sum(idw+idw2) > 1) stop("More than one nonparametric component in the skewness/dispersion submodel is not supported!!",call.=FALSE)
+
+	 if(sum(idw) == 1){
+	    type.phi <- 1	 
+		temp <- eval(parse(text=reem(wb[idw],"ncs")), data)
+		temp <- as.matrix(temp[subset])
+		xx.p <- eval(parse(text=sub(reem(wb[idw],"ncs"),"temp",wb[idw],fixed=TRUE)))
+		x.p <- as.numeric(levels(factor(xx.p)))
+		q <- length(x.p)
+		idw[1] <- TRUE
+		if(length(idw) > 2){
+		   W <- as.matrix(w[subset,!idw])
+		   colnames(W) <- colnames(w)[!idw]
+		   l <- sum(!idw)
+		}else{l <- 0}
+	 }
+	 if(sum(idw2) == 1){
+	    type.phi <- 2	 
+		temp <- eval(parse(text=reem(wb[idw2],"psp")), data)
+		temp <- as.matrix(temp[subset])
+		xx.p <- eval(parse(text=sub(reem(wb[idw2],"psp"),"temp",wb[idw2],fixed=TRUE)))
+		q <- ncol(attr(xx.p,"N"))
+		idw2[1] <- TRUE
+		if(length(idw2) > 2){
+		   W <- as.matrix(w[subset,!idw2])
+		   colnames(W) <- colnames(w)[!idw2]
+		   l <- sum(!idw2)
+		}else{l <- 0}
+	 }
+	 if(sum(idw+idw2)==0){
+	       W <- as.matrix(w[subset,])
+		   colnames(W) <- colnames(w)
+		   q <- 0
+    	   l <- ncol(W)
+	 }
+
+	 if(l>0){
+		haver <- apply(W,2,var)
+		if(q == 0) haver[1] <- 1 
+		haver2 <- colnames(W)
+		W <- as.matrix(W[,haver!=0])
+		colnames(W) <- haver2[haver!=0]
+		l <- ncol(W)
+	 }
+
+	 y <- as.matrix(response[subset])
+	 
+	pars <- names(start)
+    mu <- function(beta){
+	    for(i in 1:length(pars)) assign(pars[i], beta[i], environment(formula))
+		as.matrix(eval(nl[[2]], data))
+	}
+
+	
 beta0 <- start
 p <- length(start)
 
 GradD <- function(vP){jacobian(mu,vP[1:p])}
-if(missingArg(epsilon)) epsilon <- 0.0000001
-if(missingArg(maxiter)) maxiter <- 1000
-if(missingArg(start.lambda.phi)) start.lambda.phi <- 1
-if(missingArg(subset)) subset <- 1:length(response)
 
-y <- response[subset]
+if(length(pars)==1 & nrow(mu(start))==1){
+   mu <- function(beta) matrix(beta,length(response),1)
+   GradD <- function(vP) matrix(1,length(response),1)
+}   
+
 n <- length(y)
 
-
-if(missingArg(ncs.phi)){
-  q <- 0
-  if(missingArg(formula.phi)){
-    l <- 1
-    W <- matrix(1,length(y),1)
-	colnames(W) <- "Intercept"
-  }
-  else{
-  	mf <- model.frame(formula=formula.phi)
-  	W <- as.matrix(model.matrix(attr(mf, "terms"), data=mf))[subset,]
-	if(!is.matrix(W)){
-	   WW <- matrix(0,n,1)
-	   WW[,1] <- W
-	   W <- WW
-	}
-  	l <- ncol(W)
-  }
-}
-else{
-   xx <- ncs.phi[subset]
-   x <- as.numeric(levels(factor(xx)))
-   q <- length(x)
-   if(missingArg(formula.phi)){
-    l <- 0
-   }
-   else{
-	mf <- model.frame(formula=formula.phi)
-	WW <- model.matrix(attr(mf, "terms"), data=mf)
-	W <- as.matrix(WW[subset,2:ncol(WW)])
-	l <- ncol(W)
-   }
-}
 if(family=="Normal"){
 	xi <- 0
 	v <- function(z){
@@ -73,7 +136,6 @@ if(family=="Normal"){
 }
 if(family=="Student"){
 	if(xi[1]<=0) stop("the extra parameter must be positive!!",call.=FALSE)
-	family="Student-t"
 	nu <- xi[1]
 	v <- function(z){
 		 (nu + 1)/(nu + z^2)
@@ -96,7 +158,6 @@ if(family=="Student"){
 if(family=="Contnormal"){
 	if(xi[1]<=0  | xi[1]>=1) stop("the extra parameters must be within the interval (0, 1)!!",call.=FALSE)
 	if(xi[2]<=0  | xi[2]>=1) stop("the extra parameters must be within the interval (0, 1)!!",call.=FALSE)
-	family="Contaminated Normal"	
 	eta <- xi[1:2]
 	v <- function(z){
 		 (eta[2]^(3/2)*eta[1]*exp(z^2*(1-eta[2])/2) + (1-eta[1]))/(eta[2]^(1/2)*eta[1]*exp(z^2*(1-eta[2])/2) + (1-eta[1]))
@@ -110,7 +171,7 @@ if(family=="Contnormal"){
 				   }
 	tau <-  uniroot(function(x) v(x)*x^2 -1, lower=0, upper=35)$root
 	deviance.phi <- function(z){
-	               -2*log((abs(z/tau))*((eta[2]^(1/2)*eta[1]*dnorm(z*sqrt(eta[2])) + (1-eta[1])*dnorm(z))/(eta[2]^(1/2)*eta[1]*dnorm(tau*sqrt(eta[2])) + (1-eta[1])*dnorm(tau))))
+	               abs(-2*log((abs(z/tau))*((eta[2]^(1/2)*eta[1]*dnorm(z*sqrt(eta[2])) + (1-eta[1])*dnorm(z))/(eta[2]^(1/2)*eta[1]*dnorm(tau*sqrt(eta[2])) + (1-eta[1])*dnorm(tau)))))
 				   }
 	cdfz <- function(z){
 	        eta[1]*pnorm(z*sqrt(eta[2])) + (1-eta[1])*pnorm(z)
@@ -130,7 +191,6 @@ if(family=="Contnormal"){
 
 if(family=="Powerexp"){
 	if(xi[1]<=-1  | xi[1]>=1) stop("the extra parameter must be within the interval (-1, 1)!!",call.=FALSE)
-	family="Power Exponential"	
 	kk <- xi[1]
 	v <- function(z){
 		 abs(z)^(-(2*kk/(1+kk)))/(1+kk)
@@ -238,7 +298,6 @@ if(family=="Sinh-t"){
 
 if(family=="Hyperbolic"){
     if(xi[1]<=0) stop("the extra parameter must be positive!!",call.=FALSE)
-	family="Symmetric Hyperbolic"	
 	nu <- xi[1]
 	v <- function(z){
 		 nu/sqrt(1 + z^2)
@@ -275,15 +334,15 @@ if(family=="Slash"){
    	if(xi[1]<=0) stop("the extra parameter must be positive!!",call.=FALSE)
 	nu <- xi[1]
 	G <- function(a,x){
-	     gamma(a)*gamma_inc_P(a,x)/(x^a)
+	     gamma(a)*pgamma(x,shape=a,scale=1)/(x^a)
 	}	 
 	v <- function(z){
 		 G(nu+3/2,z^2/2)/G(nu+1/2,z^2/2)
 	}
-	ds <- function(z){G(nu+1/2,z^2/2)}
-	gdg <- function(z){ds(z)*(v(z))^2*z^2/(2*integrate(ds,0,Inf)$value)}
+	ds <- function(z){nu*G(nu+1/2,z^2/2)/sqrt(2*pi)}
+	gdg <- function(z){ds(z)*(v(z))^2*z^2}
 	dg <- 2*integrate(gdg,0,Inf)$value
-	gfg <- function(z){ds(z)*(v(z))^2*z^4/(2*integrate(ds,0,Inf)$value)}
+	gfg <- function(z){ds(z)*(v(z))^2*z^4}
 	fg <- 2*integrate(gfg,0,Inf)$value
     deviance.mu <- function(z){2*log(2/(2*nu+1))-2*log(G(nu+1/2,z^2/2))}
 	tau <- uniroot(function(x) v(x)*x^2 -1, lower=0.0001, upper=1000)$root
@@ -296,12 +355,12 @@ if(family=="Slash"){
 	                    for(gg in 1:length(z)){
                        	    temporal[gg] <- integrate(ds,-Inf,z[gg])$value
 						}
-						temporal/(2*integrate(ds,0,Inf)$value)
+						temporal
     }
 	lpdf <- function(z,phi){
-	       log(ds(z)/(2*integrate(ds,0,Inf)$value)) -(1/2)*log(phi)
+	       log(ds(z)) -(1/2)*log(phi)
     }
-	gfg <- function(z){ds(z)*z^2/(2*integrate(ds,0,Inf)$value)}
+	gfg <- function(z){ds(z)*z^2}
 	xix <- 2*integrate(gfg,0,60)$value
 }
 
@@ -316,7 +375,7 @@ subset=subset,family=family)
 }
 
 if(q>0){
-if(missingArg(lambda.phi)){
+if(attr(xx.p,"status")=="unknown"){
   objeto$q <- 0
   objeto$W <- matrix(1,n,1)
   objeto$l <- 1
@@ -327,7 +386,7 @@ if(missingArg(lambda.phi)){
 	   objeto$K_psi2 <- 4/((fg2-1)*n)
        vP <- itpE2(c(beta0, log(mean((y-mu(beta0)[subset])^2))),objeto)
   }else{
-	  if(family=="Power Exponential" && xi<0){ajuste <- vP <- itpE3(c(beta0, log(mean((y-mu(beta0)[subset])^2))),objeto)}
+	  if(family=="Powerexp" && xi<0){ajuste <- vP <- itpE3(c(beta0, log(mean((y-mu(beta0)[subset])^2))),objeto)}
 	  else{vP <- itpE(c(beta0, log(mean((y-mu(beta0)[subset])^2))),objeto)}
 
   
@@ -338,23 +397,23 @@ if(missingArg(lambda.phi)){
   objeto$l <- l  
   phi.sint <- log((y - mu(vP$theta)[subset])^2)
   if(l>0){
-    W_au <- cbind(W,1,xx,xx^2)
+    W_au <- cbind(W,1,xx.p,xx.p^2)
     phi.sint <- phi.sint - W%*%(solve(t(W_au)%*%W_au)%*%t(W_au)%*%phi.sint)[1:l]
   }
-  lambda_est <- lambda.hat(phi.sint,xx,start.lambda.phi)
+  lambda_est <- lambda.hat(phi.sint,xx.p,1,type.phi)
   lambd <- lambda_est$lambda_hat*(fg-1)/4
-}else{lambd <- lambda.phi}
+}else{lambd <- attr(xx.p,"lambda")
+      lambda.phi <- attr(xx.p,"lambda")}
 
-  ss <- splinek(xx)
-  N <- ss$N
-  M <- ss$K
+  N <- attr(xx.p,"N")
+  M <- attr(xx.p,"K")
   objeto$N <- N
   objeto$M <- M
   objeto$lambda.phi <- lambd
   gle <- sum(diag(N%*%solve(t(N)%*%N + (4*lambd/(fg-1))*M)%*%t(N)))
 }
 		if(q>0){
-		  if(missingArg(lambda.phi)){
+		  if(attr(xx.p,"status")=="unknown"){
 			if(l==0) {theta0 <- c(vP$theta[1:p], rep(vP$theta[(p+1)],q))}
 			if(l>0){theta0 <- c(vP$theta[1:p], rep(0,l), rep(vP$theta[(p+1)],q))}
 		  }
@@ -364,7 +423,7 @@ if(missingArg(lambda.phi)){
 		  }
 		}
 		if(q==0){
-		  if(missingArg(formula.phi)){
+		  if(l==1 & mean(var(W))==0){
 		        theta0 <- c(beta0, mean(log((y-mu(beta0)[subset])^2/ifelse(is.null(xix),1,xix))))
 		  }
 		  else{
@@ -406,12 +465,14 @@ if(missingArg(lambda.phi)){
 	  }
     }
 
+
+	
 objeto$W_bar <- W_bar
 if(family=="Sinh-t" | family=="Sinh-normal"){
        objeto$xi <- xi
 	  ajuste <- itpE2(theta0,objeto)
 }else{
-      if(family=="Power Exponential" && xi<0){ajuste <- itpE3(theta0,objeto)}
+      if(family=="Powerexp" && xi<0){ajuste <- itpE3(theta0,objeto)}
 	  else{ajuste <- itpE(theta0,objeto)}
 }   
 
@@ -462,18 +523,16 @@ mues <- mu(beta)[objeto$subset]
     }
 
 Kinver <- K_psi2
-iter <- ajuste$iter
 
 z.hat <- (y-mues)/sqrt(phi.es)
 D <- GradD(beta)[objeto$subset,]
 D2 <- D*matrix(1/phi.es,length(phi.es),p)
 vcov.beta <- solve(dg*t(D)%*%D2)
-se.psi <- sqrt(diag(((fg-1)/4)*Kinver%*%(t(W_bar)%*%W_bar)%*%Kinver))
+vcov.phi <- ((fg-1)/4)*Kinver%*%(t(W_bar)%*%W_bar)%*%Kinver
 escore <- t(D)%*%(v(z.hat)*((y-mues)/phi.es))
 escore <- rbind(escore,U_psi)
 
 D3 <- D*matrix(1/sqrt(phi.es),length(phi.es),p)
-h <- dg*diag(D3%*%vcov.beta%*%t(D3))
 
 if(!missingArg(local.influence)){
    Hessian <- array(0,c(p,p,length(response)))
@@ -540,42 +599,42 @@ if(!missingArg(local.influence)){
 	
 	if(q>0){
       if(l>0){
-      salida <- list(p=p,l=l,q=q,qm=0,dfe.phi=gle,coefs.mu=ajuste$theta[1:p],se.mu=sqrt(diag(vcov.beta)),filas=names(beta0),coefs.phi=ajuste$theta[(p+1):(p+l+q)],se.phi=se.psi,
-	  filas2=colnames(W),z.hat=z.hat,xi=xi,lambda.phi=lambda.phi,family=family,v=v(z.hat),dg=dg,fg=fg, cdfz=cdfz(z.hat),mu.fitted=mues, phi.fitted=phi.es,deviance.mu=deviance.mu(z.hat),
-	  deviance.phi=deviance.phi(z.hat),cw=cbind(cw,cw2),pr=cbind(pr,pr2), cw.theta=cbind(cw.theta,cw2.theta),pr.theta=cbind(pr.theta,pr2.theta),h=h,lpdf=lpdf(z.hat,phi.es),xix=xix,weights=v(z)/dg,score=max(abs(escore)),call="")
+      salida <- list(p=p,l=l,q=q,qm=0,dfe.phi=gle,coefs.mu=ajuste$theta[1:p],vcov.mu=vcov.beta,filas=names(beta0),coefs.phi=ajuste$theta[(p+1):(p+l+q)],vcov.phi=vcov.phi,
+	  filas2=colnames(W),z.hat=z.hat,xi=xi,lambda.phi=lambda.phi,type.phi=type.phi,np.phi=xx.p,family=family,v=v(z.hat),dg=dg,fg=fg, cdfz=cdfz(z.hat),mu.fitted=mues, phi.fitted=phi.es,deviance.mu=deviance.mu(z.hat),
+	  deviance.phi=deviance.phi(z.hat),cw=cbind(cw,cw2),pr=cbind(pr,pr2), cw.theta=cbind(cw.theta,cw2.theta),pr.theta=cbind(pr.theta,pr2.theta),lpdf=lpdf(z.hat,phi.es),xix=xix,weights=v(z.hat)/dg,score=escore,call="")
 	  }
       if(l==0){
-      salida <- list(p=p,l=l,q=q,qm=0,dfe.phi=gle,coefs.mu=ajuste$theta[1:p],se.mu=sqrt(diag(vcov.beta)),filas=names(beta0),z.hat=(y-mues)/sqrt(phi.es),xi=xi,lambda.phi=lambda.phi,
-	  family=family,v=v(z.hat),dg=dg,fg=fg,cdfz=cdfz(z.hat),deviance.mu=deviance.mu(z.hat),mu.fitted=mues, phi.fitted=phi.es,deviance.phi=deviance.phi(z.hat),coefs.phi=ajuste$theta[(p+1):(p+q)],se.phi=se.psi,
-	  cw=cbind(cw,cw2),pr=cbind(pr,pr2), cw.theta=cbind(cw.theta,cw2.theta),pr.theta=cbind(pr.theta,pr2.theta),h=h,lpdf=lpdf(z.hat,phi.es),xix=xix,weights=v(z)/dg,score=max(abs(escore)),call="")
+      salida <- list(p=p,l=l,q=q,qm=0,dfe.phi=gle,coefs.mu=ajuste$theta[1:p],vcov.mu=vcov.beta,filas=names(beta0),z.hat=(y-mues)/sqrt(phi.es),xi=xi,lambda.phi=lambda.phi,type.phi=type.phi, np.phi=xx.p,
+	  family=family,v=v(z.hat),dg=dg,fg=fg,cdfz=cdfz(z.hat),deviance.mu=deviance.mu(z.hat),mu.fitted=mues, phi.fitted=phi.es,deviance.phi=deviance.phi(z.hat),coefs.phi=ajuste$theta[(p+1):(p+q)],vcov.phi=vcov.phi,
+	  cw=cbind(cw,cw2),pr=cbind(pr,pr2), cw.theta=cbind(cw.theta,cw2.theta),pr.theta=cbind(pr.theta,pr2.theta),lpdf=lpdf(z.hat,phi.es),xix=xix,weights=v(z.hat)/dg,score=escore,call="")
 	  }
     }
     else{
       if(l>0){
-        salida <- list(p=p,l=l,q=q,qm=0,coefs.mu=ajuste$theta[1:p],se.mu=sqrt(diag(vcov.beta)),filas=names(beta0),coefs.phi=ajuste$theta[(p+1):(p+l)],se.phi=se.psi,
+        salida <- list(p=p,l=l,q=q,qm=0,coefs.mu=ajuste$theta[1:p],vcov.mu=vcov.beta,filas=names(beta0),coefs.phi=ajuste$theta[(p+1):(p+l)],vcov.phi=vcov.phi,
 		filas2=colnames(W),z.hat=z.hat,xi=xi,family=family,v=v(z.hat),dg=dg,fg=fg,cdfz=cdfz(z.hat),mu.fitted=mues, phi.fitted=phi.es,deviance.mu=deviance.mu(z.hat),
-		deviance.phi=deviance.phi(z.hat),cw=cbind(cw,cw2),pr=cbind(pr,pr2), cw.theta=cbind(cw.theta,cw2.theta),pr.theta=cbind(pr.theta,pr2.theta),h=h,lpdf=lpdf(z.hat,phi.es),xix=xix,weights=v(z)/dg,score=max(abs(escore)),call="")
+		deviance.phi=deviance.phi(z.hat),cw=cbind(cw,cw2),pr=cbind(pr,pr2), cw.theta=cbind(cw.theta,cw2.theta),pr.theta=cbind(pr.theta,pr2.theta),lpdf=lpdf(z.hat,phi.es),xix=xix,weights=v(z.hat)/dg,score=escore,call="")
 	  }
     }
 }
 else{
 	if(q>0){
 	 if(l>0){
-	 salida <- list(p=p,l=l,q=q,qm=0,dfe.phi=gle,coefs.mu=ajuste$theta[1:p],se.mu=sqrt(diag(vcov.beta)),filas=names(beta0),coefs.phi=ajuste$theta[(p+1):(p+l+q)],se.phi=se.psi,
-	 filas2=colnames(W),z.hat=z.hat,xi=xi,lambda.phi=lambda.phi,family=family,v=v(z.hat),dg=dg,fg=fg,cdfz=cdfz(z.hat),mu.fitted=mues, phi.fitted=phi.es,deviance.mu=deviance.mu(z.hat),
-	 deviance.phi=deviance.phi(z.hat),h=h,lpdf=lpdf(z.hat,phi.es),xix=xix,weights=v(z)/dg,score=max(abs(escore)),call="")
+	 salida <- list(p=p,l=l,q=q,qm=0,dfe.phi=gle,coefs.mu=ajuste$theta[1:p],vcov.mu=vcov.beta,filas=names(beta0),coefs.phi=ajuste$theta[(p+1):(p+l+q)],vcov.phi=vcov.phi,
+	 filas2=colnames(W),z.hat=z.hat,xi=xi,lambda.phi=lambda.phi,type.phi=type.phi, np.phi=xx.p,family=family,v=v(z.hat),dg=dg,fg=fg,cdfz=cdfz(z.hat),mu.fitted=mues,phi.fitted=phi.es,deviance.mu=deviance.mu(z.hat),
+	 deviance.phi=deviance.phi(z.hat),lpdf=lpdf(z.hat,phi.es),xix=xix,weights=v(z.hat)/dg,score=escore,call="")
 		}
 	 if(l==0){
-	 salida <- list(p=p,l=l,q=q,qm=0,dfe.phi=gle,coefs.mu=ajuste$theta[1:p],se.mu=sqrt(diag(vcov.beta)),filas=names(beta0),z.hat=(y-mues)/sqrt(phi.es),xi=xi,lambda.phi=lambda.phi,
-	 family=family,v=v(z.hat),dg=dg,fg=fg,cdfz=cdfz(z.hat),deviance.mu=deviance.mu(z.hat),mu.fitted=mues, phi.fitted=phi.es,deviance.phi=deviance.phi(z.hat), coefs.phi=ajuste$theta[(p+1):(p+q)],se.phi=se.psi,
-	 h=h,lpdf=lpdf(z.hat,phi.es),xix=xix,weights=v(z)/dg,score=max(abs(escore)),call="")
+	 salida <- list(p=p,l=l,q=q,qm=0,dfe.phi=gle,coefs.mu=ajuste$theta[1:p],vcov.mu=vcov.beta,filas=names(beta0),z.hat=(y-mues)/sqrt(phi.es),xi=xi,lambda.phi=lambda.phi,type.phi=type.phi, np.phi=xx.p,
+	 family=family,v=v(z.hat),dg=dg,fg=fg,cdfz=cdfz(z.hat),deviance.mu=deviance.mu(z.hat),mu.fitted=mues, phi.fitted=phi.es,deviance.phi=deviance.phi(z.hat), coefs.phi=ajuste$theta[(p+1):(p+q)],
+	 vcov.phi=vcov.phi,lpdf=lpdf(z.hat,phi.es),xix=xix,weights=v(z.hat)/dg,score=escore,call="")
 		}
 	}
 	else{
 	 if(l>0){
-	 salida <- list(p=p,l=l,q=q,qm=0,coefs.mu=ajuste$theta[1:p],se.mu=sqrt(diag(vcov.beta)),filas=names(beta0),coefs.phi=ajuste$theta[(p+1):(p+l)],se.phi=se.psi,filas2=colnames(W),
+	 salida <- list(p=p,l=l,q=q,qm=0,coefs.mu=ajuste$theta[1:p],vcov.mu=vcov.beta,filas=names(beta0),coefs.phi=ajuste$theta[(p+1):(p+l)],vcov.phi=vcov.phi,filas2=colnames(W),
 	 z.hat=z.hat,xi=xi,family=family,v=v(z.hat),dg=dg,fg=fg,cdfz=cdfz(z.hat),mu.fitted=mues, phi.fitted=phi.es,deviance.mu=deviance.mu(z.hat),deviance.phi=deviance.phi(z.hat),
-     h=h,lpdf=lpdf(z.hat,phi.es),xix=xix,weights=v(z)/dg,score=max(abs(escore)),call="")
+     lpdf=lpdf(z.hat,phi.es),xix=xix,weights=v(z.hat)/dg,score=escore,call="")
 		}
 	}
 }
