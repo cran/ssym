@@ -1,12 +1,12 @@
 \name{ssym.nl}
 \alias{ssym.nl}
-\title{Fitting Semi-parametric Symmetric Regression Models}
+\title{Fitting Semi-parametric Log-symmetric Regression Models}
 \description{
 \bold{ssym.nl} is used to fit a semi-parametric regression model suitable for 
-data set analysis in which the conditional distribution of the response is 
-symmetric and continuous. In this setup, both location and dispersion
-parameters of the response variable distribution are explicitly modeled,
-the location using a nonlinear function and the dispersion using a semi-parametric
+analysis of data sets in which the response variable is continuous, strictly
+positive, and asymmetric. In this setup, both median and skewness
+of the response variable distribution are explicitly modeled,
+the median using a nonlinear function and the skewness using a semi-parametric
 function, which may be approximated by a natural cubic spline or a P-spline.}
 \usage{
 ssym.nl(formula, start, family, xi, data, epsilon, maxiter, subset, local.influence)
@@ -14,8 +14,8 @@ ssym.nl(formula, start, family, xi, data, epsilon, maxiter, subset, local.influe
 \arguments{
   \item{formula}{a symbolic description of the systematic component of the model to be fitted. See details for further information.}
   \item{start}{a named numeric vector of starting estimates for the parameters in the specified nonlinear function.}  
-  \item{family}{a description of the error distribution to be used in the model. Supported families include \emph{Normal}, \emph{Student}, \emph{Contnormal},
-               \emph{Powerexp}, \emph{Hyperbolic}, \emph{Slash}, \emph{Sinh-normal} and \emph{Sinh-}t, which correspond to normal, Student-t, contaminated normal,
+  \item{family}{a description of the (log) error distribution to be used in the model. Supported families include \emph{Normal}, \emph{Student}, \emph{Contnormal},
+               \emph{Powerexp}, \emph{Hyperbolic}, \emph{Slash}, \emph{Sinh-normal} and \emph{Sinh-t}, which correspond to normal, Student-t, contaminated normal,
 			    power exponential, symmetric hyperbolic, slash, sinh-normal and sinh-t distributions, respectively.}
   \item{xi}{a numeric value or numeric vector that represents the extra parameter of the specified error distribution.}
   \item{data}{an optional data frame, list or environment containing the variables in the model.}
@@ -25,16 +25,16 @@ ssym.nl(formula, start, family, xi, data, epsilon, maxiter, subset, local.influe
   \item{local.influence}{logical. If TRUE, local influence measures under two perturbation schemes are calculated.}
 }
 \details{
-The argument \emph{formula} comprises three parts (separated by the symbols "~" and "|"), namely: observed response variable, expression
-of the nonlinear function representing the location submodel, and predictor of the dispersion submodel (having logarithmic link). A non-parametric
-effect may be specified in the predictor of the dispersion submodel, either approximated by a natural cubic spline or a P-spline through the
-functions \emph{ncs()} or \emph{psp()}, respectively.
+The argument \emph{formula} comprises of three parts (separated by the symbols "~" and "|"), namely: observed response variable in log-scale, predictor of the
+median submodel (having logarithmic link) and predictor of the skewness submodel (having logarithmic link). A non-parametric effect may be
+specified in the predictors, either approximated by a natural cubic spline or a P-spline using the functions \emph{ncs()} or \emph{psp()},
+respectively.
 
-The iterative estimation process is based on the Fisher scoring and backfitting algorithms. Because some distributions such as Student-t,
-contaminated normal, power exponential, slash and symmetric hyperbolic may be obtained as a scale mixture of normal distributions, the
-Expectation-Maximization algorithm is applied in those cases to obtain a more efficient iterative process for the parameter estimation. Furthermore,
-because the Sinh-t distribution can be obtained as a scale mixture of Sinh-normal distributions, the Expectation-Maximization algorithm
-is also applied in that case to obtain a more efficient iterative process for the parameter estimation. The smoothing parameter(s) is(are)
+The iterative estimation process is based on the Fisher scoring and backfitting algorithms. Because some distributions such as log-Student-t,
+log-contaminated-normal, log-power-exponential, log-slash and log-hyperbolic may be obtained as a power mixture of the log-normal distribution, the
+expectation-maximization (EM) algorithm is applied in those cases to obtain a more efficient iterative process for the parameter estimation. Furthermore,
+because the Birnbaum-Saunders-t distribution can be obtained as a scale mixture of the Birnbaum-Saunders distribution, the expectation-maximization algorithm
+is also applied in this case to obtain a more efficient iterative process for the parameter estimation. The smoothing parameter(s) is(are)
 chosen using the unweighted cross-validation score.
 
 The function \emph{ssym.nl()} calculates deviance-type residuals for both submodels as well as local influence measures under case-weight and
@@ -42,35 +42,31 @@ response perturbation schemes.
 }
 
 \value{
-\item{coefs.mu}{a vector of parameter estimates associated with the nonlinear function fitted to the location of the response (or log-response) variable.}
-\item{coefs.phi}{a vector of parameter estimates associated with the semiparametric function fitted to the dispersion of the response (or log-response) variable.}
-\item{se.mu}{approximated standard errors asociated with \emph{coefs.mu}.}
-\item{se.phi}{approximated standard errors asociated with \emph{coefs.phi}.}
+\item{coefs.mu}{a vector of parameter estimates associated with the median submodel.}
+\item{coefs.phi}{a vector of parameter estimates associated with the skewness submodel.}
+\item{vcov.mu}{approximate variance-covariance matrix associated with the median submodel.}
+\item{vcov.phi}{approximate variance-covariance matrix associated with the skewness submodel.}
 \item{weights}{final weights of the iterative process.}
-\item{lambda.mu}{estimate for the smoothing parameter associated to the location parameter.}
-\item{dfe.mu}{degrees of freedom associated with the nonparametric part of the location submodel.}
-\item{lambda.phi}{estimate for the smoothing parameter associated to the dispersion parameter.}
-\item{dfe.phi}{degrees of freedom associated with the nonparametric part of the dispersion submodel.}
-\item{deviance.mu}{a vector of \emph{deviances} associated with the location of the response (or log-response) variable.}
-\item{deviance.phi}{a vector of \emph{deviances} associated with the dispersion of the response (or log-response) variable.}
-\item{mu.fitted}{a vector of fitted values for the location of the response (or log-response) variable.}
-\item{phi.fitted}{a vector of fitted values for the dispersion of the response (or log-response) variable.}
+\item{lambda.phi}{estimate for the smoothing parameter associated  with the nonparametric part of the skewness submodel.}
+\item{dfe.phi}{degrees of freedom associated with the nonparametric part of the skewness submodel.}
+\item{deviance.mu}{a vector of \emph{deviances} associated with the median submodel.}
+\item{deviance.phi}{a vector of \emph{deviances} associated with the skewness submodel.}
+\item{mu.fitted}{a vector of fitted values for the (log) median submodel.}
+\item{phi.fitted}{a vector of fitted values for the skewness submodel.}
 \item{lpdf}{a vector of individual contributions to the log-likelihood function.}
-\item{cdfz}{a vector of the cumulative distribution function of each individual.}
+
 \item{cw}{if \emph{local.influence=TRUE}, a matrix of local influence and total local influence measures (under the case-weight perturbation scheme)
-                   associated with \emph{coefs.mu} and based on the conformal normal curvature.}
+                   associated with the median submodel.}
 \item{pr}{if \emph{local.influence=TRUE}, a matrix of local influence and total local influence measures (under the response perturbation scheme)
-                   associated with \emph{coefs.mu} and based on the conformal normal curvature.}
-\item{cw.theta}{if \emph{local.influence=TRUE}, a matrix of local influence and total local influence measures (under the case-weight perturbation scheme)
-                asociated with the (entire) vector of parameters and based on the conformal normal curvature.}
-\item{pr.theta}{if \emph{local.influence=TRUE}, a matrix of local influence and total local influence measures (under the response perturbation scheme)
-                asociated with the (entire) vector of parameters and based on the conformal normal curvature.}
+                   associated with the median submodel.}
+\item{cw.theta}{if \emph{local.influence=TRUE}, a matrix of local influence and total local influence measures (under the case-weight perturbation scheme).}
+\item{pr.theta}{if \emph{local.influence=TRUE}, a matrix of local influence and total local influence measures (under the response perturbation scheme).}
 }
 
-\references{Vanegas, L.H. and Paula, G.A. (2014a) A Semiparametric Approach for Joint Modeling of Median and Skewness. TEST (accepted)
+\references{Vanegas, L.H. and Paula, G.A. (2015a) A Semiparametric Approach for Joint Modeling of Median and Skewness. TEST (to appear)
 
 
-			Vanegas, L.H. and Paula, G.A. (2014b) Log-symmetric distributions: statistical properties and parameter estimation. Brazilian Journal of Probability and Statistics (submitted)}
+			Vanegas, L.H. and Paula, G.A. (2015b) Log-symmetric distributions: statistical properties and parameter estimation. Brazilian Journal of Probability and Statistics (to appear)}
 
 \author{Luis Hernando Vanegas <hvanegasp@gmail.com> and Gilberto A. Paula}
 
@@ -81,30 +77,24 @@ response perturbation schemes.
 \examples{
 
 ###################################################################################
-################## European rabbits Data - a log-Student-t model   #############
+######### Ultrasonic Calibration Data - a log-contaminated-normal model ###########
 ###################################################################################
 
-data("Erabbits", package="ssym")
-fit <- ssym.nl(log(wlens) ~ b1 - b2/(b3 + age) | ncs(age), start=c(b1=5.6,
-               b2=128, b3=36.4), data=Erabbits, family='Student', xi=11,
-			   local.influence=TRUE)
+data("Chwirut1", package="NISTnls")
+sv <- c(b1=0.15, b2=0.005, b3=0.012)
+fit <- ssym.nl(log(y) ~ -b1*x - log(b2 + b3*x) | psp(x), start=sv,
+       data=Chwirut1, family='Contnormal', xi=c(0.6,0.1), local.influence=TRUE)
 summary(fit)
 
-################## Plot of the fitted model ##################
+################## Graph of the nonparametric effect ##################
 
-par(mfrow=c(1,2))                                                      
-plot(Erabbits$age, Erabbits$wlens, xlim=range(Erabbits$age),
-     ylim=range(Erabbits$wlens), ylab="", cex=0.3, lwd=3, xlab="age")                      
-par(new=TRUE)
-plot(Erabbits$age,exp(fitted(fit)$mu), xlim=range(Erabbits$age),
-     ylim=range(Erabbits$wlens), ylab="", type="l", main="Median", xlab="")
-np.graph(fit, which=2, exp=TRUE, xlab="age", main="Skewness")
+np.graph(fit, which=2, exp=TRUE)
 
-################## Plot of deviance-type residuals ##################
+################## Graph of deviance-type residuals ##################
 
 plot(fit)
 
-################## Plot of local influence measures ##################
+################## Graph of local influence measures ##################
 
 ilm <- influence.ssym(fit)
 
@@ -113,30 +103,31 @@ ilm <- influence.ssym(fit)
 ###################################################################################
 
 data("Biaxial", package="ssym")
-fit <- ssym.nl(log(Life) ~ b1*Work^b2, start=c(b1=16,b2=-0.2), data=Biaxial,
-               family='Sinh-normal', xi=0.41, local.influence=TRUE)
+sv <- c(b1=16, b2=-0.25)
+fit <- ssym.nl(log(Life) ~ b1*Work^b2, start=sv, data=Biaxial,
+               family='Sinh-normal', xi=1.54)
 summary(fit)
 
-################## Plot of the fitted model ##################
-
-attach(Biaxial)
-xl <- "Work per cycle"
-rx <-range(Biaxial$Work)
-ry <- range(Biaxial$Life)
-plot(Biaxial$Work, Biaxial$Life, xlim=rx, ylim=ry, type="p", cex=0.3, lwd=3,
-     ylab="", xlab="")
-par(new=TRUE)
-ids <- sort(Biaxial$Work,index=TRUE)$ix
-plot(Biaxial$Work[ids], exp(fitted(fit)$mu[ids]), xlim=rx, ylim=ry, type="l",
-     ylab="Life", xlab=xl)
-
-################## Plot of deviance-type residuals ##################
+################## Graph of deviance-type residuals ##################
 
 plot(fit)
 
-################## Plot of local influence measures ##################
+###################################################################################
+################## European rabbits Data - a log-normal model   #############
+###################################################################################
 
-ilm <- influence.ssym(fit)
+data("Erabbits", package="ssym")
+fit <- ssym.nl(log(wlens) ~ b1 - b2/(b3 + age) | psp(age), start=c(b1=5.6,
+               b2=128, b3=36.4), data=Erabbits, family='Normal')
+summary(fit)
+
+################## Graph of the nonparametric effect ##################
+
+np.graph(fit, which=2, exp=TRUE)
+
+################## Graph of deviance-type residuals ##################
+
+plot(fit)
 
 ###################################################################################
 ######### Gross Domestic Product per capita Data - a Birnbaum-Saunders model ######
@@ -149,22 +140,43 @@ summary(fit)
 
 ################## Plot of the fitted model ##################
 
-xl <- "GDP per capita 2010"
+id <- sort(gdp$gdp2010, index=TRUE)$ix
 par(mfrow=c(1,2))
-hist(gdp$gdp2010, xlim=range(gdp$gdp2010), ylim=c(0,0.00015), prob=TRUE, breaks=55,
-     col="light gray", border="dark gray",xlab="",main="",ylab="")
+hist(gdp$gdp2010[id],xlim=range(gdp$gdp2010),ylim=c(0,0.00025),prob=TRUE,
+     breaks=200,col="light gray",border="dark gray",xlab="",ylab="",main="")
 par(new=TRUE)
-plot(gdp$gdp2010, exp(fit$lpdf)/gdp$gdp2010, xlim=range(gdp$gdp2010), ylim=c(0,0.00015),
-     type="l", xlab=xl, ylab="", main="Histogram")
-
-plot(gdp$gdp2010, fit$cdfz, xlim=range(gdp$gdp2010), ylim=c(0,1), type="l", xlab="",
-     ylab="")
+plot(gdp$gdp2010[id],exp(fit$lpdf[id])/gdp$gdp2010[id],xlim=range(gdp$gdp2010),
+     ylim=c(0,0.00025),type="l",xlab="",ylab="Density",main="Histogram")
+	 
+plot(gdp$gdp2010[id],fit$cdfz[id],xlim=range(gdp$gdp2010),ylim=c(0,1),type="l",
+     xlab="",ylab="",main="")
 par(new=TRUE)
-plot(ecdf(gdp$gdp2010), xlim=range(gdp$gdp2010), ylim=c(0,1), verticals=TRUE, do.points=FALSE,
-     col="dark gray", xlab=xl, main="Empirical Cumulative Distribution Function")
+plot(ecdf(gdp$gdp2010[id]),xlim=range(gdp$gdp2010),ylim=c(0,1),verticals=TRUE,
+     do.points=FALSE,col="dark gray",ylab="Probability.",xlab="",main="ECDF")
 
-################## Plot of deviance-type residuals ##################
 
-plot(fit)
+###################################################################################
+################# Blood flow Data - a log-power-exponential model #################
+###################################################################################
+
+#data("la", package="gamlss.nl")
+#fit <- ssym.nl(log(PET60) ~ log(bflow) + log(1+b1*exp(-b2/bflow)) | bflow,
+#               data=la, start=c(b1=-0.6,b2=98), family="Powerexp", xi=-0.45)
+#summary(fit)
+#plot(fit)
+
+
+###################################################################################
+############# Australian Institute of Sport Data - a log-normal model #############
+###################################################################################
+
+#data("ais", package="sn")
+#sex <- ifelse(ais$sex=="male",1,0)
+#ais2 <- data.frame(BMI=ais$BMI,LBM=ais$LBM,sex)
+#start = c(b1=7, b2=0.3, b3=2, b4=0)
+#fit <- ssym.nl(log(BMI) ~ log(b1 + b2*LBM + b3*sex + b4*LBM*sex) | sex + LBM,
+#               data=ais2, start=start, family="Normal")
+#summary(fit)
+#plot(fit)
 
 }

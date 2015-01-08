@@ -4,7 +4,7 @@
 \title{Personal Injure Insurance}
 \description{
 This data set contains information on 540 settled personal injury insurance claims from an Australian insurance company, which is a sample of the original data set. These claims
-had legal representation and arose from accidents occurring from January 1998 through to June 1999.
+had legal representation were obtained for accidents that occurred from January 1998 to June 1999.
 }
 \usage{data(Claims)}
 \format{

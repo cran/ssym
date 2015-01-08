@@ -1,15 +1,15 @@
 \name{gdp}
 \alias{gdp}
 \docType{data}
-\title{Gross Domestic Product per capita}
+\title{Gross Domestic Product (per capita)}
 \description{
-This dataset corresponds to the Gross Domestic Product per capita (current US$) of 190 countries during 2010.}
+This dataset corresponds to the per capita gross domestic product (current US$) of 190 countries during 2010.}
 \usage{data(gdp)}
 \format{
-  A data frame with 540 observations on the following 2 variables.
+  A data frame with 190 observations on the following 2 variables.
   \describe{
     \item{\code{Country}}{Country.}
-    \item{\code{gdp2010}}{Gross Domestic Product per capita (current US$).}
+    \item{\code{gdp2010}}{The per capita gross domestic product (current US$).}
   }
 }
 \references{

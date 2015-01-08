@@ -1,13 +1,16 @@
 \name{Snacks}
 \alias{Snacks}
 \docType{data}
-\title{Texture of five different types of Snacks}
+\title{Textures of five different types of snacks}
 \description{
-This data set comes from an experiment developed in the School of Public Health (University of Sao Paulo), in which four different forms of light snacks
-(named B, C, D, and E) were compared across 20 weeks with a traditional snack (named A). For the light snacks, the hydrogenated vegetable fat (hvf) was
-replaced by canola oil under different proportions: B (0\% hvf, 22\% canola oil), C (17\% hvf, 5\% canola oil), D (11\% hvf, 11\% canola oil) and E (5\% hvf, 17\% canola oil),
-whereas A (22\% hvf, 0\% canola oil). The experiment was conducted so that in each even week a random sample of 15 units of each snack type was analyzed
-in a laboratory and various variables were measured.
+This data set comes from an experiment developed in the School of Public Health - University of S\~ao Paulo, in which four different forms of light snacks
+(denoted by B, C, D, and E) were compared with a traditional snack (denoted by A) for 20 weeks.
+For the light snacks, the hydrogenated vegetable fat (hvf) was
+replaced by canola oil using different proportions: B (0\% hvf, 22\% canola oil), C (17\% hvf, 5\% canola oil), D (11\% hvf, 11\% canola oil) and E (5\% hvf, 17\% canola oil);
+A (22\% hvf, 0\% canola oil) contained no canola oil.
+The experiment was conducted such that a random sample of 15 units of each snack type was analyzed
+in a laboratory in each even week to measure various variables.
+A total of 75 units was analyzed in each even week; with 750 units being analyzed during the experiment.
 }
 \usage{data(Snacks)}
 \format{

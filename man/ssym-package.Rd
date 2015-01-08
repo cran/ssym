@@ -2,15 +2,17 @@
 \alias{ssym-package}
 \alias{ssym}
 \docType{package}
-\title{Fitting Semiparametric Symmetric Regression Models}
+\title{Fitting Semiparametric Log-symmetric Regression Models}
 \description{
-This package allows to fit a semiparametric regression model suitable for data set analysis in which the conditional distribution of the response is symmetric and continuous.}
+This package allows to fit a semi-parametric regression model suitable for 
+analysis of data sets in which the response variable is continuous, strictly
+positive, and asymmetric.}
 \details{
 \tabular{ll}{
 Package: \tab ssym\cr
 Type: \tab Package\cr
-Version: \tab 1.0\cr
-Date: \tab 2014-03-30\cr
+Version: \tab 1.5.2\cr
+Date: \tab 2015-01-08\cr
 License: \tab GPL-2 | GPL-3\cr
 }
 }
@@ -19,9 +21,9 @@ Luis Hernando Vanegas <hvanegasp@gmail.com> and Gilberto A. Paula
 
 Maintainer: Luis Hernando Vanegas
 }
-\references{Vanegas, L.H. and Paula, G.A. (2014) A Semiparametric Approach for Joint Modeling of Median and Skewness. TEST (submitted)
+\references{Vanegas, L.H. and Paula, G.A. (2015a) A Semiparametric Approach for Joint Modeling of Median and Skewness. TEST (to appear)
 
-            Vanegas, L.H. and Paula, G.A. (2014) Log-symmetric distributions: statistical properties and parameter estimation. Brazilian Journal of Probability and Statistics (submitted)}
+            Vanegas, L.H. and Paula, G.A. (2015b) Log-symmetric distributions: statistical properties and parameter estimation. Brazilian Journal of Probability and Statistics (to appear)}
 
 \examples{
 data("Snacks", package="ssym")                                    

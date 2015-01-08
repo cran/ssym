@@ -1,21 +1,24 @@
 \name{Ovocytes}
 \alias{Ovocytes}
 \docType{data}
-\title{Fraction of Cell Volume}
+\title{Fraction of cell volume}
 \description{
 This data set comes from an experiment comparing the responses of immature and mature goat ovocytes to an hyper-osmotic test. As a compound permeates,
 water reenters the cell, and the cell re-expands until the system reaches an osmotic equilibrium. The results are obtained using immature and ovulated
-(mature) ovocytes exposed to propane-diol, a permeable compound. Then, the cell volume during equilibration is recorded at each time \emph{t}.}
+(mature) ovocytes exposed to propanediol, a permeable compound. Then, the cell volume during equilibration is recorded at each time \emph{t}.}
+
 \usage{data(Ovocytes)}
 \format{
   A data frame with 161 observations on the following 3 variables.
   \describe{
     \item{\code{type}}{stage of the goat ovocyte: \emph{Mature} or \emph{Immature}.}
-    \item{\code{time}}{time since exposition to propane-diol.}
+    \item{\code{time}}{time since exposition to propanediol.}
     \item{\code{fraction}}{fraction of initial isotonic cell volume at any given time \emph{t} during equilibration.}
   }
 }
 \references{
+Huet, S., Bouvier, A., Gruet, M.A. and Jolivet, E. (1996). Statistical Tools for Nonlinear Regression. Springer, New York.
+
 Le Gal F., Gasqui P., Renard J.P. (1994) Differential Osmotic Behavior of Mammalian Oocytes before and after Maturation: A Quantitative Analysis Using
 Goat Oocytes as a Model. Cryobiology, 31: 154-170.
 

@@ -2,7 +2,7 @@
 \alias{np.graph}
 \title{Tool for plotting natural cubic splines and P-splines}
 \description{
-\bold{np.graph} is used to display a graphic of a fitted non-parametric effect (either natural cubic spline or P-spline) from a object of class ``ssym".}
+\bold{np.graph} displays a graph of a fitted non-parametric effect (either natural cubic spline or P-spline) from a object of class ``ssym".}
 \usage{
 np.graph(object, which, exp, xlab, ylab, main)
 }

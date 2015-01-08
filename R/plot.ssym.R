@@ -1,7 +1,7 @@
 plot.ssym <-
 function(x, ...){
 par(mfrow=c(2,2))
-plot(x$z.hat, x$weights, main = "Individual-specific Weights", cex=0.3, lwd=3, xlab="Ordinary residuals", ylab="Weight")
+plot(x$z.hat, x$weights, main = "Standardized individual-specific weights", cex=0.3, lwd=3, xlab="Ordinary residuals", ylab="Weight")
 qqnorm(qnorm(x$cdfz), main="Overall goodness-of-fit statistic", cex=0.3, lwd=3, xlab="Quantiles of N(0,1)", ylab="Overall residuals")
 abline(0,1)
 res.dev.mu <- sqrt(x$deviance.mu)*ifelse(x$z.hat>=0,1,-1)   

@@ -120,7 +120,7 @@ if(p>0){
 		  	beta <- theta[1:p]
 		    mus <- objeto$mu(beta)
 	    	gammav <- theta[(p+qm+1):(p+qm+l)]
-		    h <- theta[(p+qm+l+1):length(objeto$theta_work)]
+		    h <- theta[(p+qm+l+1):length(theta)]
 		    hm <- theta[(p+1):(p+qm)]			
 			phi <- exp(objeto$W%*%gammav + objeto$N%*%h)
 			z <- (y-mus-objeto$Nm%*%hm)/sqrt(phi)			
@@ -215,7 +215,7 @@ if(p==0){
 	    while(tol_EM > objeto$epsilon){
 			theta <- theta_new
 	    	gammav <- theta[(p+qm+1):(p+qm+l)]
-		    h <- theta[(p+qm+l+1):length(objeto$theta_work)]
+		    h <- theta[(p+qm+l+1):length(theta)]
 		    hm <- theta[(p+1):(p+qm)]			
 			phi <- exp(objeto$W%*%gammav + objeto$N%*%h)
 			z <- (y-objeto$Nm%*%hm)/sqrt(phi)			

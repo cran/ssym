@@ -39,7 +39,7 @@ if(object$qm>0){
 	B <- cbind(1,-diag(q-1))
 	f <- object$coefs.mu[(object$p+1):(object$p+q)]
 	v <- (B%*%object$vcov.mu[(object$p+1):(object$p+q),(object$p+1):(object$p+q)]%*%t(B))
-	v2 <- eigen(v)
+	v2 <- eigen(v,symmetric=TRUE)
   cat("\n **** Nonparametric component\n")
   cat("                 knots: ",q,"\n")
   cat("    degrees of freedom: ",round(object$dfe.mu,digits=3),"\n")
@@ -67,12 +67,13 @@ if(object$q>0){
 	B <- cbind(1,-diag(q-1))
 	f <- object$coefs.phi[(object$l+1):(object$l+q)]
 	v <- (B%*%object$vcov.phi[(object$l+1):(object$l+q),(object$l+1):(object$l+q)]%*%t(B))
-	v2 <- eigen(v)
+	v2 <- eigen(v,symmetric=TRUE)
   cat("\n **** Nonparametric component\n")
   cat("                 knots: ",q,"\n")
   cat("    degrees of freedom: ",round(object$dfe.phi,digits=3),"\n")
-  if(min(v2$values)/max(v2$values) > 1e-15)  
-  cat("               p-value: ",format.pval(1-pchisq(t(B%*%f)%*%solve(v)%*%(B%*%f),q-1),digits=3),"\n")
+  if(!is.complex(v2$values)){
+	  if(min(v2$values)/max(v2$values) > 1e-15)  
+	  cat("               p-value: ",format.pval(1-pchisq(t(B%*%f)%*%solve(v)%*%(B%*%f),q-1),digits=3),"\n")}
 }
 cat("\n **** Deviance: ",round(sum(object$deviance.phi),digits=2),"\n")
 cat(" ****************************************************************************\n")

@@ -32,6 +32,7 @@ function(object, which, exp, xlab, ylab, main){
 
 	if(typesp==1){
 		x.p <- as.numeric(levels(factor(xx.p)))
+		nm <- length(x.p)
 		se <- sqrt(diag(se))
 	    cont <- 1000
 		ss <- ncs(xx.p)
@@ -52,6 +53,7 @@ function(object, which, exp, xlab, ylab, main){
 		}
 	 }else{
 		  iknots <- attr(attr(xx.p,"N"),"knots")
+		  nm <- length(as.numeric(levels(factor(xx.p))))
 		  x.p <- seq(min(xx.p),max(xx.p),length=500)
 		  Bs <- bs(x.p,knots=iknots,degree=3,intercept=TRUE)
 		  spl <- Bs%*%g
@@ -61,7 +63,7 @@ function(object, which, exp, xlab, ylab, main){
 		  }
 
 	  if(exp==TRUE){
-	  	  lims <- cbind(exp(g - 2*se),exp(g + 2*se))
+	  	  lims <- cbind(exp(g - qnorm(0.025/nm)*se),exp(g + qnorm(0.025/nm)*se))
 	  	  plot(t, exp(spl), xlim=range(xx.p), ylim=range(exp(resp)), type="l", col="blue", xlab="", ylab="", main="")
 		  par(new=TRUE)
 		  plot(x.p, lims[,1], xlim=range(xx.p), ylim=range(exp(resp)), type="l", col="blue", xlab="", ylab="", main="", lty=3)
@@ -71,7 +73,7 @@ function(object, which, exp, xlab, ylab, main){
           plot(xx.p, exp(resp), xlim=range(xx.p), ylim=range(exp(resp)), type="p", cex=0.3, lwd=3, xlab=xlab, ylab=ylab, main=main)
 
 	  }else{
-	  	  lims <- cbind(g - 2*se,g + 2*se)
+	  	  lims <- cbind(g - qnorm(0.025/nm)*se,g + qnorm(0.025/nm)*se)
 	  	  plot(t, spl, xlim=range(xx.p), ylim=range(resp), type="l", col="blue", xlab="", ylab="", main="")
 		  par(new=TRUE)
 		  plot(x.p, lims[,1], xlim=range(xx.p), ylim=range(resp), type="l", col="blue", xlab="", ylab="", main="", lty=3)
@@ -80,4 +82,5 @@ function(object, which, exp, xlab, ylab, main){
 		  par(new=TRUE)
           plot(xx.p, resp, xlim=range(xx.p), ylim=range(resp), type="p", cex=0.3, lwd=3, xlab=xlab, ylab=ylab, main=main)
 	  }
+	  #list(lims=cbind(x.p,lims),spl=spl,resp=cbind(xx.p,resp),t=t)
 }

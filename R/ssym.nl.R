@@ -127,7 +127,7 @@ if(family=="Normal"){
 	dg <- 1
     fg <- 3
 	deviance.mu <- function(z){z^2}
-	deviance.phi <- function(z){z^2-1-log(z^2)}
+	deviance.phi <- function(z){abs(z^2-1-log(z^2))}
 	cdfz <- function(z){pnorm(z)}
 	lpdf <- function(z,phi){
 	       log(exp(-z^2/2)/sqrt(2*pi)) -(1/2)*log(phi)
@@ -145,8 +145,8 @@ if(family=="Student"){
 	}
 	dg <- (nu + 1)/(nu + 3)
     fg <- 3*(nu + 1)/(nu + 3)
-	deviance.mu <- function(z){(nu+1)*log(1 + z^2/nu)}
-	deviance.phi <- function(z){(nu+1)*log((nu + z^2)/(nu + 1)) -log(z^2)}
+	deviance.mu <- function(z){abs((nu+1)*log(1 + z^2/nu))}
+	deviance.phi <- function(z){abs((nu+1)*log((nu + z^2)/(nu + 1)) -log(z^2))}
 	cdfz <- function(z){pt(z,nu)}
 	lpdf <- function(z,phi){
 	       log((gamma((nu+1)/2)/(sqrt(nu*pi)*gamma(nu/2)))*(1 + z^2/nu)^(-(nu+1)/2)) -(1/2)*log(phi)
@@ -167,7 +167,7 @@ if(family=="Contnormal"){
 		  eta[2]^(1/2)*eta[1]*exp(z^2*(1-eta[2])/2)*(1-eta[2])*z*(eta[2]*(1-eta[1]) - (1-eta[1]))/((eta[2]^(1/2)*eta[1]*exp(z^2*(1-eta[2])/2) + (1-eta[1]))^2)
 	}
 	deviance.mu <- function(z){
-	               -2*log(((eta[2]^(1/2)*eta[1]*dnorm(z*sqrt(eta[2])) + (1-eta[1])*dnorm(z))/(eta[2]^(1/2)*eta[1]*dnorm(0) + (1-eta[1])*dnorm(0))))
+	               abs(-2*log(((eta[2]^(1/2)*eta[1]*dnorm(z*sqrt(eta[2])) + (1-eta[1])*dnorm(z))/(eta[2]^(1/2)*eta[1]*dnorm(0) + (1-eta[1])*dnorm(0)))))
 				   }
 	tau <-  uniroot(function(x) v(x)*x^2 -1, lower=0, upper=35)$root
 	deviance.phi <- function(z){
@@ -200,8 +200,8 @@ if(family=="Powerexp"){
 	}
 	dg <- 2^(1-kk)*gamma((3-kk)/2)/((1+kk)^2*gamma((1+kk)/2))
 	fg <- (kk + 3)/(kk + 1)
-	deviance.mu <- function(z){(abs(z))^(2/(1+kk))}
-	deviance.phi <- function(z){(abs(z))^(2/(1+kk)) - (1+kk) - log(z^2/((1+kk)^(1+kk)))}
+	deviance.mu <- function(z){abs((abs(z))^(2/(1+kk)))}
+	deviance.phi <- function(z){abs((abs(z))^(2/(1+kk)) - (1+kk) - log(z^2/((1+kk)^(1+kk))))}
 	cdfz <- function(z){
 		pp <- 2/(kk+1)
 	    sigmap <- (1+kk)^((kk+1)/2)
@@ -229,7 +229,7 @@ if(family=="Sinh-normal"){
 	       dshn(z)*(4*sinh(z)*cosh(z)/(alpha^2) - tanh(z))^2*z^2}
 	fg <- 2*integrate(fgf,0,60)$value
     deviance.mu <- function(z){
-				   if(alpha<=2) 4*(sinh(z))^2/alpha^2 - log((cosh(z))^2)
+				   if(alpha<=2) abs(4*(sinh(z))^2/alpha^2 - log((cosh(z))^2))
 				   else{
 				       z0 <- acosh(alpha/2)
 					   2*log(dshn(z0)/dshn(z))
@@ -313,9 +313,9 @@ if(family=="Hyperbolic"){
  	fgf <- function(z){
 	       dh(z)*(nu*z^2/sqrt(1 + z^2))^2}
 	fg <- 2*integrate(fgf,0,Inf)$value
-    deviance.mu <- function(z){2*nu*(sqrt(1+z^2)-1)}
+    deviance.mu <- function(z){abs(2*nu*(sqrt(1+z^2)-1))}
 	tau <- sqrt((1 + sqrt(1 + 4*nu^2))/(2*nu^2))
-    deviance.phi <- function(z){2*nu*(sqrt(1+z^2) - sqrt(1 + tau^2)) - log(z^2/tau^2)}	
+    deviance.phi <- function(z){abs(2*nu*(sqrt(1+z^2) - sqrt(1 + tau^2)) - log(z^2/tau^2))}	
 	cdfz <- function(z){temporal <- matrix(0,length(z),1)
 	                    for(gg in 1:length(z)){
                        	    temporal[gg] <- integrate(dh,-Inf,z[gg])$value
@@ -334,7 +334,7 @@ if(family=="Slash"){
    	if(xi[1]<=0) stop("the extra parameter must be positive!!",call.=FALSE)
 	nu <- xi[1]
 	G <- function(a,x){
-	     gamma(a)*pgamma(x,shape=a,scale=1)/(x^a)
+		 gamma(a)*pgamma(1,shape=a,scale=1/x)/(x^a)
 	}	 
 	v <- function(z){
 		 G(nu+3/2,z^2/2)/G(nu+1/2,z^2/2)
@@ -344,7 +344,7 @@ if(family=="Slash"){
 	dg <- 2*integrate(gdg,0,Inf)$value
 	gfg <- function(z){ds(z)*(v(z))^2*z^4}
 	fg <- 2*integrate(gfg,0,Inf)$value
-    deviance.mu <- function(z){2*log(2/(2*nu+1))-2*log(G(nu+1/2,z^2/2))}
+    deviance.mu <- function(z){abs(2*log(2/(2*nu+1))-2*log(G(nu+1/2,z^2/2)))}
 	tau <- uniroot(function(x) v(x)*x^2 -1, lower=0.0001, upper=1000)$root
     deviance.phi <- function(z){
 	            a <- 2*log(G(nu+1/2,tau^2/2)) + log(tau^2)                                       

@@ -179,12 +179,12 @@ if(p>0){
 			while(tol_EM > objeto$epsilon){
 				theta <- theta_new
 			  	beta <- theta[1:p]
-			    mus <- objeto$mu(beta)[objeto$subset]
-				hm <- objeto$theta_work[(p+1):(p+qm)]			
+			    mus <- objeto$mu(beta)
+				hm <- theta[(p+1):(p+qm)]			
 		    	gammav <- theta[(p+qm+1):(p+qm+l)]
 			    h <- theta[(p+qm+l+1):length(theta)]
 				phi <- exp(objeto$W%*%gammav + objeto$N%*%h)
-				z <- (y-mus-objeto$Nm%*%hm)/sqrt(phi)			
+				z <- (y-mus-objeto$Nm%*%hm)/sqrt(phi)
 				psi <- theta[(p+qm+1):length(theta)]
 				U_psi <- (1/2)*t(W_bar)%*%(v2(z)*z^2-1)
 				U_psi[(l+1):length(psi)] <- U_psi[(l+1):length(psi)] - objeto$lambda.phi*objeto$M%*%h
@@ -313,7 +313,7 @@ if(p==0){
 	        Kpsim[(l+1):(l+q),(l+1):(l+q)] <- objeto$lambda.phi*objeto$M
 			while(tol_EM > objeto$epsilon){
 				theta <- theta_new
-				hm <- objeto$theta_work[(p+1):(p+qm)]			
+				hm <- objeto$theta[(p+1):(p+qm)]			
 		    	gammav <- theta[(p+qm+1):(p+qm+l)]
 			    h <- theta[(p+qm+l+1):length(theta)]
 				phi <- exp(objeto$W%*%gammav + objeto$N%*%h)
