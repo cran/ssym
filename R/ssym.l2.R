@@ -1,4 +1,4 @@
-ssym.l <-
+ssym.l2 <-
 function(formula, family, xi, data, epsilon, maxiter, subset, local.influence, spec, std.out){
 
 if(family!="Normal" & family!="Slash" & family!="Hyperbolic" & family!="Sinh-t" & family!="Sinh-normal" & family!="Contnormal" & family!="Powerexp" & family!="Student")
@@ -53,16 +53,16 @@ if(missingArg(maxiter)) maxiter <- 1000
 	nl <- formula(formula, lhs=0, rhs=1)
 	ll <- formula(formula, lhs=1, rhs=2)
 
-	 response <- as.matrix(eval(ll[[2]], data))
+	 responses <- as.matrix(eval(ll[[2]], data))
+	 if(missingArg(subset)) subset <- 1:nrow(responses)
 
-	 if(missingArg(subset)) subset <- 1:length(response)
-
-	 y <- as.matrix(response[subset])
+	 y <- as.matrix(responses[subset,1])
+	 event <- as.matrix(responses[subset,2])
 	 n <- length(y)
-	if(missingArg(spec)) spe <- 2
-	else{if(spec!="AIC" & spec!="BIC") stop("The specified criterion to estimate the smoothing parameter is not supported!!",call.=FALSE)
+	 if(missingArg(spec)) spe <- 2
+	 else{if(spec!="AIC" & spec!="BIC") stop("The specified criterion to estimate the smoothing parameter is not supported!!",call.=FALSE)
 		 spe <- ifelse(spec=="AIC",2,log(n))
-	}
+	 }
 
 	 x <- model.matrix(nl, data)
 	 xa <- "ncs("
@@ -177,10 +177,9 @@ if(missingArg(maxiter)) maxiter <- 1000
 	
 if(family=="Normal"){
 	xi <- 0
-	v <- function(z) rep(1,length(z)) 
+	v <- function(z) rep(1,length(z))
+	vb <- function(z) rep(1,length(z)) 
 	vp <- function(z) rep(0,length(z))
-	dg <- 1
-    fg <- 3
 	deviance.mu <- function(z) z^2
 	deviance.phi <- function(z) abs(z^2-1-log(z^2))
 	cdf <- function(z) pnorm(z)
@@ -190,10 +189,9 @@ if(family=="Normal"){
 if(family=="Student"){
 	if(xi[1]<=0) stop("the extra parameter must be positive!!",call.=FALSE)
 	nu <- xi[1]
-	v <- function(z) (nu + 1)/(nu + z^2) 
+	v <- function(z) (nu + 1)/(nu + z^2)
+	vb <- function(z) (1-pt(z*sqrt((nu+2)/nu),nu+2))/(1-pt(z,nu))
 	vp <- function(z) -2*z*(nu + 1)/((nu + z^2)^2)
-	dg <- (nu + 1)/(nu + 3)
-    fg <- 3*(nu + 1)/(nu + 3)
 	deviance.mu <- function(z) abs((nu+1)*log(1 + z^2/nu))
 	deviance.phi <- function(z) abs((nu+1)*log((nu + z^2)/(nu + 1)) -log(z^2))
 	cdf <- function(z) pt(z,nu)
@@ -212,11 +210,8 @@ if(family=="Contnormal"){
 	deviance.phi <- function(z) abs(-2*log((abs(z/tau))*((eta[2]^(1/2)*eta[1]*dnorm(z*sqrt(eta[2])) + (1-eta[1])*dnorm(z))/(eta[2]^(1/2)*eta[1]*dnorm(tau*sqrt(eta[2])) + (1-eta[1])*dnorm(tau)))))
 	cdf <- function(z) eta[1]*pnorm(z*sqrt(eta[2])) + (1-eta[1])*pnorm(z)
 	pdf <- function(z) sqrt(eta[2])*eta[1]*dnorm(z*sqrt(eta[2])) + (1-eta[1])*dnorm(z)
+	vb <- function(z) (eta[1]*eta[2]*(1 - pnorm(z*sqrt(eta[2]))) + (1-eta[1])*(1-pnorm(z)))/(1 - cdf(z))
 	xix <- eta[1]/eta[2] + (1-eta[1])
- 	dgd <- function(z) (v(z)*z)^2*(sqrt(eta[2])*eta[1]*dnorm(z*sqrt(eta[2])) + (1-eta[1])*dnorm(z))
-	dg <- 2*integrate(dgd,0,35)$value
- 	fgd <- function(z) (v(z))^2*z^4*(sqrt(eta[2])*eta[1]*dnorm(z*sqrt(eta[2])) + (1-eta[1])*dnorm(z))
-	fg <- 2*integrate(fgd,0,35)$value
 }
 
 if(family=="Powerexp"){
@@ -224,8 +219,6 @@ if(family=="Powerexp"){
 	kk <- xi[1]
 	v <- function(z) abs(z)^(-(2*kk/(1+kk)))/(1+kk)
 	vp <- function(z) -2*kk*ifelse(z>=0,1,-1)*abs(z)^(-((3*kk + 1)/(1+kk)))/(1+kk)^2
-	dg <- 2^(1-kk)*gamma((3-kk)/2)/((1+kk)^2*gamma((1+kk)/2))
-	fg <- (kk + 3)/(kk + 1)
 	deviance.mu <- function(z) abs((abs(z))^(2/(1+kk)))
 	deviance.phi <- function(z) abs((abs(z))^(2/(1+kk)) - (1+kk) - log(z^2/((1+kk)^(1+kk))))
 	pp <- 2/(kk+1)
@@ -241,9 +234,7 @@ if(family=="Sinh-normal"){
 	vp <- function(z) ((cosh(z)*z-sinh(z))/z^2)*(4*cosh(z)/alpha^2 - 1/cosh(z)) + (sinh(z)/z)*(4*sinh(z)/alpha^2 + sinh(z)/(cosh(z)^2))
 	dg <- 2 + 4/(alpha^2) - (sqrt(2*pi)/alpha)*(1-2*(pnorm(sqrt(2)/alpha,mean=0,sd=sqrt(2)/2)-0.5))*exp(2/(alpha^2))
 	dshn <- function(z) 2*cosh(z)*exp(-(2/alpha^2)*(sinh(z))^2)/(alpha*sqrt(2*pi))
- 	fgf <- function(z) dshn(z)*(4*sinh(z)*cosh(z)/(alpha^2) - tanh(z))^2*z^2
-	fg <- 2*integrate(fgf,0,60)$value
-    deviance.mu <- function(z){if(alpha<=2) abs(4*(sinh(z))^2/alpha^2 - log((cosh(z))^2))
+	deviance.mu <- function(z){if(alpha<=2) abs(4*(sinh(z))^2/alpha^2 - log((cosh(z))^2))
 				               else{2*log(dshn(acosh(alpha/2))/dshn(z))}}
 	tau <- uniroot(function(x) 4*x*sinh(x)*cosh(x)/(alpha^2) - tanh(x)*x -1, lower=0, upper=50)$root
     deviance.phi <- function(z){
@@ -252,7 +243,7 @@ if(family=="Sinh-normal"){
 				ifelse(a<b,0,a-b)}
 	cdf <- function(z) pnorm(2*sinh(z)/alpha)
 	pdf <- function(z) (2*cosh(sqrt(z^2))*exp(-2*sinh(sqrt(z^2))*sinh(sqrt(z^2))/alpha^2)/(sqrt(2*pi)*alpha))
-	fgf <- function(z) dshn(z)*z^2
+	fgf <- function(z) pdf(z)*z^2
 	xix <- 2*integrate(fgf,0,20)$value
 }	
 
@@ -265,10 +256,6 @@ if(family=="Sinh-t"){
 	  (4*(nu+1)/z)*((alpha^2*nu + 4*sinh(z)*sinh(z))*(sinh(z)*sinh(z) + cosh(z)*cosh(z)) - 8*sinh(z)*sinh(z)*cosh(z)*cosh(z))/(alpha^2*nu + 4*sinh(z)*sinh(z))^2  - 1/(z*cosh(z)*cosh(z))  - v(z)*z/z^2
 	}
 	dsht <- function(z) (gamma((nu+1)/2)/(gamma(nu/2)*sqrt(nu*pi)))*(2/alpha)*cosh(z)*(1 + 4*(sinh(z))^2/(nu*alpha^2))^(-(nu+1)/2)
- 	dgd <- function(z) dsht(z)*(4*sinh(z)*cosh(z)*(nu+1)/(alpha^2*nu + 4*sinh(z)*sinh(z)) - tanh(z))^2
-	dg <- 2*integrate(dgd,0,60)$value
- 	fgf <- function(z) dsht(z)*(4*sinh(z)*cosh(z)*(nu+1)/(alpha^2*nu + 4*sinh(z)*sinh(z)) - tanh(z))^2*z^2
-	fg <- 2*integrate(fgf,0,70)$value
     deviance.mu <- function(z){if(alpha<=2*sqrt(1 + 1/nu)) (nu + 1)*log(1 + 4*(sinh(z))^2/(nu*alpha^2)) - log((cosh(z))^2)
 				               else{2*log(dsht(acosh(sqrt(alpha^2/4 - 1/nu)))/dsht(z))}}
 	tau <- uniroot(function(x) 4*sinh(x)*cosh(x)*(nu+1)*x/(alpha^2*nu + 4*sinh(x)*sinh(x)) - tanh(x)*x -1, lower=0, upper=80)$root
@@ -280,8 +267,6 @@ if(family=="Sinh-t"){
 	pdf <- function(z) dsht(z)
 	fgf <- function(z) dsht(z)*z^2
 	xix <- 2*integrate(fgf,0,50)$value
-	dshn <- function(z) 2*cosh(z)*exp(-(2/alpha^2)*(sinh(z))^2)/(alpha*sqrt(2*pi))
- 	fgf <- function(z) dshn(z)*(4*sinh(z)*cosh(z)/(alpha^2) - tanh(z))^2*z^2
 }
 
 if(family=="Hyperbolic"){
@@ -290,10 +275,6 @@ if(family=="Hyperbolic"){
 	v <- function(z) nu/sqrt(1 + z^2)
 	vp <- function(z) -nu*z/((1 + z^2)^(3/2))
 	dh <- function(z) exp(-nu*sqrt(1+z^2))/(2*besselK(nu, 1))
- 	dgd <- function(z) dh(z)*(nu*z/sqrt(1 + z^2))^2
-	dg <- 2*integrate(dgd,0,Inf)$value
- 	fgf <- function(z) dh(z)*(nu*z^2/sqrt(1 + z^2))^2
-	fg <- 2*integrate(fgf,0,Inf)$value
     deviance.mu <- function(z) abs(2*nu*(sqrt(1+z^2)-1))
 	tau <- sqrt((1 + sqrt(1 + 4*nu^2))/(2*nu^2))
     deviance.phi <- function(z) abs(2*nu*(sqrt(1+z^2) - sqrt(1 + tau^2)) - log(z^2/tau^2))
@@ -301,6 +282,11 @@ if(family=="Hyperbolic"){
 	                   for(gg in 1:length(z)) temporal[gg] <- integrate(dh,-Inf,z[gg])$value
 					   temporal}
 	pdf <- function(z) dh(z)
+	dh2 <- function(z) exp(-nu*sqrt(1+z^2))/sqrt(1+z^2)
+	cdf2 <- function(z){temporal <- matrix(0,length(z),1)
+	                   for(gg in 1:length(z)) temporal[gg] <- integrate(dh2,z[gg],Inf)$value
+					   nu*temporal/(2*besselK(nu,1))}
+	vb <- function(z) cdf2(z)/(1-cdf(z))				   
 	fgf <- function(z) dh(z)*z^2
 	xix <- 2*integrate(fgf,0,Inf)$value
 }
@@ -312,10 +298,7 @@ if(family=="Slash"){
 	v <- function(z) G(nu+3/2,z^2/2)/G(nu+1/2,z^2/2)
 	vp <- function(z) grad(v,z)
 	ds <- function(z) nu*G(nu+1/2,z^2/2)/sqrt(2*pi)
-	gdg <- function(z) ds(z)*(v(z))^2*z^2
-	dg <- 2*integrate(gdg,0,Inf)$value
-	gfg <- function(z) ds(z)*(v(z))^2*z^4
-	fg <- 2*integrate(gfg,0,Inf)$value
+	ds2 <- function(z) (nu+1)*G(nu+3/2,z^2/2)/sqrt(2*pi)
     deviance.mu <- function(z) abs(2*log(2/(2*nu+1))-2*log(G(nu+1/2,z^2/2)))
 	tau <- uniroot(function(x) v(x)*x^2 -1, lower=0.0001, upper=1000)$root
     deviance.phi <- function(z){
@@ -325,56 +308,60 @@ if(family=="Slash"){
 	cdf <- function(z){temporal <- matrix(0,length(z),1)
 	                   for(gg in 1:length(z)) temporal[gg] <- integrate(ds,-Inf,z[gg])$value
 					   temporal}
+	cdf2 <- function(z){temporal <- matrix(0,length(z),1)
+	                   for(gg in 1:length(z)) temporal[gg] <- integrate(ds2,-Inf,z[gg])$value
+					   temporal}
 	pdf <- function(z) ds(z)
-	gfg <- function(z){ds(z)*z^2}
+	vb <- function(z) (nu/(nu+1))*(1 - cdf2(z))/(1 - cdf(z))
+	gfg <- function(z) ds(z)*z^2
 	xix <- 2*integrate(gfg,0,60)$value
 }
 
-objeto <- list(maxiter=maxiter, epsilon=epsilon, y=y, family=family, xi=xi, dg=dg, fg=fg, v=v, p=p, qm=qm, l=l, q=q, pspm=pspm, pspp=pspp, orig="linear")
+h <- function(z) pdf(z)/(1-cdf(z))
+objeto <- list(maxiter=maxiter, epsilon=epsilon, y=y, event=event, family=family, xi=xi, v=v, vp=vp, p=p, qm=qm, l=l, h=h, q=q, pspm=pspm, pspp=pspp, penm=penm, penp=penp, orig="linear")
+if(family=="Slash" || family=="Hyperbolic" || family=="Contnormal" || family=="Student") objeto$vb <- vb
 
-thetam0 <- solve(crossprod(pspm) + penm)%*%crossprod(pspm,y)
-thetap0 <- solve(crossprod(pspp) + penp)%*%crossprod(pspp,log((y-pspm%*%thetam0)^2/ifelse(is.null(xix),1,xix)))
+thetam0 <- solve(crossprod(pspm[event==0,]) + penm)%*%crossprod(pspm[event==0,],y[event==0])
+thetap0 <- solve(crossprod(pspp[event==0,]) + penp)%*%crossprod(pspp[event==0,],log((y[event==0]-pspm[event==0,]%*%thetam0)^2/ifelse(is.null(xix),1,xix)))
 theta0 <- c(thetam0,thetap0)
 
 if(any(statusm == "unknown")  | any(statusp == "unknown")){
 	if(any(statusp == "unknown")) pspp2 <- crossprod(pspp)
 	frlambda <- function(lambdas){
-	
 				if(any(statusm == "unknown")){
 				    lambdas.mu[statusm == "unknown"] <- exp(lambdas[1:sum(statusm == "unknown")])
 					if(p>0) penm2 <- Klambda(c(0,log(lambdas.mu)),penm,c(p,qm))
 					else  penm2 <- Klambda(log(lambdas.mu),penm,qm)
 				}else penm2 <- penm
-				
 				if(any(statusp == "unknown")){
 				    lambdas.phi[statusp == "unknown"]	<- exp(lambdas[(sum(statusm == "unknown")+1):(sum(statusm == "unknown")+sum(statusp == "unknown"))])
 					if(l>0) penp2 <- Klambda(c(0,log(lambdas.phi)),penp,c(l,q))
 					else  penp2 <- Klambda(log(lambdas.phi),penp,q)
 				}else penp2 <- penp
-
 				objeto$penm <- penm2
 				objeto$penp <- penp2
 
-				if(family=="Sinh-t"){
-				vP <- itpE2(theta0,objeto)}
-				else{if( (family=="Powerexp" && xi < 0) || (family=="Sinh-normal") || (family=="Normal") ) vP <- itpE3(theta0,objeto)
-				     else vP <- itpE(theta0,objeto)
-				}
+				if(family=="Slash" || family=="Hyperbolic" || family=="Contnormal" || family=="Student")  vP <- itpEC(theta0,objeto)
+				else vP <- itpEC2(theta0,objeto)
 
 				mu_es <- pspm%*%vP[1:(p+sum(qm))]
 				phi_es <- exp(pspp%*%vP[(p+sum(qm)+1):(p+sum(qm)+l+sum(q))])
 				z_es <- (y - mu_es)/sqrt(phi_es)
-
+				h_es <- ifelse(event==1,h(z_es),0)
+				v_es <- ifelse(event==1,0,v(z_es))
+				vp_es <- ifelse(event==1,0,vp(z_es))
 				gle <- 0
-				if(sum(qm) > 0 ){
-					  pspmw <- pspm*matrix(1/sqrt(phi_es),n,ncol(pspm))
-					  gle <- gle + sum(diag(solve(crossprod(pspmw) + (1/dg)*penm2)%*%crossprod(pspmw)))
+			    if(sum(qm) > 0 ){
+				  Dc <- ifelse(event==1,h_es*(h_es-v_es*z_es),vp_es*z_es + v_es)
+				  temp <- crossprod(pspm,pspm*matrix(Dc/phi_es,n,ncol(pspm)))
+	              gle <- gle + sum(diag(solve(temp + penm2)%*%temp))
 				}
 				if(sum(q) > 0 ){
-					  gle <- gle + sum(diag(solve(pspp2 + (4/(fg-1))*penp2)%*%pspp2))
+	              Dcab <- ifelse(event==1,h_es + z_es*h_es*(h_es-v_es*z_es),vp_es*z_es^2 + 2*v_es*z_es)*z_es/4
+				  temp <- crossprod(pspp,pspp*matrix(Dcab,n,ncol(pspp)))
+	              gle <- gle + sum(diag(solve(temp + penp2)%*%temp))
 				}
-
-				-2*sum(log(pdf(z_es)) -(1/2)*log(phi_es)) + spe*gle
+				-2*sum(log(ifelse(event==1,1-cdf(z_es),pdf(z_es)/sqrt(phi_es)))) + spe*gle
 	}
 	  salida <- try(nlminb(rep(0,(sum(statusm == "unknown")+sum(statusp == "unknown"))),frlambda), silent=TRUE)
 	  if(!is.list(salida)){
@@ -400,68 +387,83 @@ if(any(statusm == "unknown")  | any(statusp == "unknown")){
 	objeto$penm <- penm
 	objeto$penp <- penp
 
-if(family=="Sinh-t"){
-vP <- itpE2(theta0,objeto)}
-else{if( (family=="Powerexp" && xi < 0) || (family=="Sinh-normal") || (family=="Normal") ) vP <- itpE3(theta0,objeto)
-     else vP <- itpE(theta0,objeto)
-}
+if(family=="Slash" || family=="Hyperbolic" || family=="Contnormal" || family=="Student")  vP <- itpEC(theta0,objeto)
+else vP <- itpEC2(theta0,objeto)
 
 thetam <- vP[1:(p+sum(qm))]
 thetap <- vP[(p+sum(qm)+1):(p+sum(qm)+l+sum(q))]
-mu_es <- pspm%*%vP[1:(p+sum(qm))]
-phi_es <- exp(pspp%*%vP[(p+sum(qm)+1):(p+sum(qm)+l+sum(q))])
+mu_es <- pspm%*%thetam
+phi_es <- exp(pspp%*%thetap)
 z_es <- (y - mu_es)/sqrt(phi_es)
-v_es <- v(z_es)
 
 if(missingArg(std.out)){
-	score.mu <- crossprod(pspm,v_es*z_es/sqrt(phi_es)) - penm%*%vP[1:(p+sum(qm))]
-	score.phi <- crossprod(pspp,(v_es*z_es^2 - 1)/2) - penp%*%vP[(p+sum(qm)+1):(p+sum(qm)+l+sum(q))]
-	pspm2 <- crossprod(pspm,pspm*matrix(1/phi_es,n,ncol(pspm)))
-	vcov.mu <- solve(dg*pspm2 + penm)
-	if(sum(qm)>0) vcov.mu <- crossprod(vcov.mu,tcrossprod((dg*pspm2),vcov.mu))
-	vcov.phi <- solve(((fg-1)/4)*pspp2 + penp)
-	if(sum(q)>0) vcov.phi <- crossprod(vcov.phi,tcrossprod(((fg-1)/4)*pspp2,vcov.phi))
-	
-	if(sum(qm) > 0 ){
-	  stes.mu <- matrix(-1,length(qm),2)
-	  pos <- c(0,cumsum(qm)) + p
-      hatm <- diag(tcrossprod(solve(pspm2 + (1/dg)*penm),pspm2))
-	  if(p>0){
-	    gle.mu <- matrix(0,length(qm)+1,1)
-	  	gle.mu[1] <- sum(hatm[1:p])
-	  }
-	  else gle.mu <- matrix(0,length(qm),1)
-	  for(i in 1:length(qm)){
-		  gle.mu[i+min(1,p)] <- sum(hatm[(pos[i]+1):(pos[i+1])])
-		  invm <- try(solve(vcov.mu[(pos[i]+1):pos[i+1],(pos[i]+1):pos[i+1]]), silent=TRUE)
-		  if(!is.matrix(invm)) invm <- solve(vcov.mu[(pos[i]+1):pos[i+1],(pos[i]+1):pos[i+1]] + diag(qm[i])*0.000000001)
-		  stes.mu[i,1] <- crossprod(thetam[(pos[i]+1):pos[i+1]],invm%*%thetam[(pos[i]+1):pos[i+1]])
-		  stes.mu[i,2] <- 1 - pchisq(stes.mu[i,1],df=qm[i])
-	  }
-	}else gle.mu <- p
-	
-	if(sum(q) > 0 ){
-	  stes.phi <- matrix(-1,length(q),2)
-	  pos <- c(0,cumsum(q)) + l
-      hatm <- diag(tcrossprod(solve(pspp2 + (4/(fg-1))*penp),pspp2))
-	  if(l>0){
-	    gle.phi <- matrix(0,length(q)+1,1)
-	  	gle.phi[1] <- sum(hatm[1:l])
-	  }
-	  else gle.phi <- matrix(0,length(q),1)
-	  for(i in 1:length(q)){
-		  gle.phi[i+min(1,l)] <- sum(hatm[(pos[i]+1):(pos[i+1])])
-		  invm <- try(solve(vcov.phi[(pos[i]+1):pos[i+1],(pos[i]+1):pos[i+1]]), silent=TRUE)
-		  if(!is.matrix(invm)) invm <- solve(vcov.phi[(pos[i]+1):pos[i+1],(pos[i]+1):pos[i+1]] + diag(q[i])*0.000000001)
-		  stes.phi[i,1] <- crossprod(thetap[(pos[i]+1):pos[i+1]],invm%*%thetap[(pos[i]+1):pos[i+1]])
-		  stes.phi[i,2] <- 1 - pchisq(stes.phi[i,1],df=q[i])
-	  }
-	}else gle.phi <- l
 
-	out_ <- list(p=p,qm=qm,l=l,q=q,y=y, score.mu=score.mu,score.phi=score.phi,vcov.mu=vcov.mu,vcov.phi=vcov.phi,family=family,xi=xi,
-	               model.matrix.mu=X, model.matrix.phi=W, deviance.mu=deviance.mu(z_es), deviance.phi=deviance.phi(z_es), deviance.mu.f=deviance.mu, deviance.phi.f=deviance.phi, 
-				   z_es=z_es, theta.mu=thetam, theta.phi=thetap, cdfz=cdf(z_es), lpdf=(log(pdf(z_es))-(1/2)*log(phi_es)), xix=xix, weights=v_es/dg, censored="FALSE",
-				   dg=dg, fg=fg, mu.fitted=mu_es, phi.fitted=phi_es, v=v, orig="linear", pspm=pspm, pspp=pspp, penm=penm, penp=penp, gle.mu=gle.mu, gle.phi=gle.phi)
+	h_es <- ifelse(event==1,h(z_es),0)
+	v_es <- ifelse(event==1,0,v(z_es))
+	vt_es <- ifelse(event==1,h_es/z_es,v_es)
+	s_es <- ifelse(event==1,h_es*z_es + 1,v_es*z_es^2)
+	score.mu <- crossprod(pspm,vt_es*z_es/sqrt(phi_es)) - penm%*%thetam
+	score.phi <- crossprod(pspp,(s_es - 1)/2) - penp%*%thetap
+	
+	Ltt <- matrix(0,ncol(pspm)+ncol(pspp),ncol(pspm)+ncol(pspp))
+	vp_es <- ifelse(event==1,0,vp(z_es))
+	Dc   <- ifelse(event==1,h_es*(h_es-v_es*z_es),vp_es*z_es + v_es)
+	Dcar <- ifelse(event==1,h_es + z_es*h_es*(h_es-v_es*z_es),vp_es*z_es^2 + 2*v_es*z_es)/2
+	Dcab <- Dcar*z_es/2
+	Ltt[1:ncol(pspm),1:ncol(pspm)] <- -crossprod(pspm,pspm*matrix(Dc/phi_es,n,ncol(pspm)))
+	Ltt[(ncol(pspm)+1):(ncol(pspm)+ncol(pspp)),1:ncol(pspm)] <- -crossprod(pspp,pspm*matrix(Dcar/sqrt(phi_es),n,ncol(pspm)))
+	Ltt[1:ncol(pspm),(ncol(pspm)+1):(ncol(pspm)+ncol(pspp))] <- t(Ltt[(ncol(pspm)+1):(ncol(pspm)+ncol(pspp)),1:ncol(pspm)])
+	Ltt[(ncol(pspm)+1):(ncol(pspm)+ncol(pspp)),(ncol(pspm)+1):(ncol(pspm)+ncol(pspp))] <- -crossprod(pspp,pspp*matrix(Dcab,n,ncol(pspp)))
+	
+	vcov.theta <- solve(-Ltt + bdiag(penm,penp))
+	if(sum(q)>0 || sum(qm)>0) vcov.theta <- crossprod(vcov.theta,tcrossprod(-Ltt,vcov.theta))
+
+		if(sum(qm) > 0 ){
+		  vcov.mu <- vcov.theta[1:ncol(pspm),1:ncol(pspm)]
+		  stes.mu <- matrix(-1,length(qm),2)
+		  pos <- c(0,cumsum(qm)) + p
+	      hatm <- diag(solve(-Ltt[1:ncol(pspm),1:ncol(pspm)] + penm)%*%(-Ltt[1:ncol(pspm),1:ncol(pspm)]))
+		  if(p>0){
+		    gle.mu <- matrix(0,length(qm)+1,1)
+		  	gle.mu[1] <- p
+		  }
+		  else gle.mu <- matrix(0,length(qm),1)
+		  for(i in 1:length(qm)){
+			  gle.mu[i+min(1,p)] <- sum(hatm[(pos[i]+1):(pos[i+1])])
+			  invm <- try(solve(vcov.mu[(pos[i]+1):pos[i+1],(pos[i]+1):pos[i+1]]), silent=TRUE)
+			  if(!is.matrix(invm)) invm <- solve(vcov.mu[(pos[i]+1):pos[i+1],(pos[i]+1):pos[i+1]] + diag(qm[i])*0.000000001)
+			  stes.mu[i,1] <- crossprod(thetam[(pos[i]+1):pos[i+1]],invm%*%thetam[(pos[i]+1):pos[i+1]])
+			  stes.mu[i,2] <- 1 - pchisq(stes.mu[i,1],df=qm[i])
+		  }
+		}else gle.mu <- p
+		
+		if(sum(q) > 0 ){
+		  vcov.phi <- vcov.theta[(1+ncol(pspm)):(ncol(pspp)+ncol(pspm)),(1+ncol(pspm)):(ncol(pspp)+ncol(pspm))]
+		  stes.phi <- matrix(-1,length(q),2)
+		  pos <- c(0,cumsum(q)) + l
+	      hatm <- diag(solve(-Ltt[(ncol(pspm)+1):(ncol(pspm)+ncol(pspp)),(ncol(pspm)+1):(ncol(pspm)+ncol(pspp))] + penp)%*%(-Ltt[(ncol(pspm)+1):(ncol(pspm)+ncol(pspp)),(ncol(pspm)+1):(ncol(pspm)+ncol(pspp))]))
+		  if(l>0){
+		    gle.phi <- matrix(0,length(q)+1,1)
+		  	gle.phi[1] <- l
+		  }
+		  else gle.phi <- matrix(0,length(q),1)
+		  for(i in 1:length(q)){
+			  gle.phi[i+min(1,l)] <- sum(hatm[(pos[i]+1):(pos[i+1])])
+			  invm <- try(solve(vcov.phi[(pos[i]+1):pos[i+1],(pos[i]+1):pos[i+1]]), silent=TRUE)
+			  if(!is.matrix(invm)) invm <- solve(vcov.phi[(pos[i]+1):pos[i+1],(pos[i]+1):pos[i+1]] + diag(q[i])*0.000000001)
+			  stes.phi[i,1] <- crossprod(thetap[(pos[i]+1):pos[i+1]],invm%*%thetap[(pos[i]+1):pos[i+1]])
+			  stes.phi[i,2] <- 1 - pchisq(stes.phi[i,1],df=q[i])
+		  }
+		}else gle.phi <- l
+
+	cdf_es <- cdf(z_es)	
+	out_ <-   list(p=p,qm=qm,l=l,q=q,y=y, event=event, score.mu=score.mu,score.phi=score.phi,vcov.mu=vcov.theta[1:ncol(pspm),1:ncol(pspm)],
+	               cov.mu.phi=vcov.theta[1:ncol(pspm),(ncol(pspm)+1):(ncol(pspm)+ncol(pspp))], h=h, 
+	               vcov.phi=vcov.theta[(ncol(pspm)+1):(ncol(pspm)+ncol(pspp)),(ncol(pspm)+1):(ncol(pspm)+ncol(pspp))], family=family,xi=xi,
+	               model.matrix.mu=X, model.matrix.phi=W, deviance.mu=ifelse(event==1,-2*log(1-cdf_es),deviance.mu(z_es)), gle.mu=gle.mu,
+				   deviance.phi=(ifelse(event==1,-2*log(1-cdf_es),deviance.phi(z_es)) + ifelse(event==1 & z_es>0,-2*log(2),0)), gle.phi=gle.phi, 
+				   z_es=z_es, theta.mu=thetam, theta.phi=thetap, cdfz=cdf, lpdf=log(ifelse(event==1,1-cdf_es,pdf(z_es)/sqrt(phi_es))), xix=xix, 
+				   mu.fitted=mu_es, phi.fitted=phi_es, orig="linear", pspm=pspm, pspp=pspp, penm=penm, penp=penp, censored="TRUE")
 	
 	if(sum(qm)>0){
 	  out_$which.mu <- which.mu
@@ -479,20 +481,12 @@ if(missingArg(std.out)){
 	}
 
 if(!missingArg(local.influence)){
-	vp_es <- vp(z_es)
-	Dc   <- (vp_es*z_es + v_es)
-	Dcar <- (vp_es*z_es^2 + 2*z_es*v_es)/2
-	Dcab <- Dcar*z_es/2
-	Ltt <- matrix(0,ncol(pspm)+ncol(pspp),ncol(pspm)+ncol(pspp))
+	Ltt <- Ltt - bdiag(penm,penp)
+	Lgg <- Ltt[(ncol(pspm)+1):(ncol(pspm)+ncol(pspp)),(ncol(pspm)+1):(ncol(pspm)+ncol(pspp))]
 	Ltt2 <- matrix(0,ncol(pspm)+ncol(pspp),ncol(pspm)+ncol(pspp))	
-	Ltt[1:ncol(pspm),1:ncol(pspm)] <- -crossprod(pspm,pspm*matrix(Dc/phi_es,n,ncol(pspm))) - penm
-	Ltt[(ncol(pspm)+1):(ncol(pspm)+ncol(pspp)),1:ncol(pspm)] <- -crossprod(pspp,pspm*matrix(Dcar/sqrt(phi_es),n,ncol(pspm)))
-	Ltt[1:ncol(pspm),(ncol(pspm)+1):(ncol(pspm)+ncol(pspp))] <- t(Ltt[(ncol(pspm)+1):(ncol(pspm)+ncol(pspp)),1:ncol(pspm)])
-	Lgg <- -crossprod(pspp,pspp*matrix(Dcab,n,ncol(pspp))) - penp
-	Ltt[(ncol(pspm)+1):(ncol(pspm)+ncol(pspp)),(ncol(pspm)+1):(ncol(pspm)+ncol(pspp))] <- Lgg
 	Ltt2[(ncol(pspm)+1):(ncol(pspm)+ncol(pspp)),(ncol(pspm)+1):(ncol(pspm)+ncol(pspp))] <- solve(Lgg)
 
-	delta <- rbind(t(pspm*matrix(v_es*z_es/sqrt(phi_es),length(phi_es),ncol(pspm))), (1/2)*t(matrix(v_es*z_es^2-1,length(phi_es),ncol(pspp))*pspp))
+	delta <- rbind(t(pspm*matrix(vt_es*z_es/sqrt(phi_es),length(phi_es),ncol(pspm))), (1/2)*t(matrix(s_es-1,length(phi_es),ncol(pspp))*pspp))
 	tl <- t(delta)%*%(solve(Ltt)-Ltt2)%*%delta
 	tl <- tl/sqrt(sum(diag(t(tl)%*%tl)))
 	cw <- abs(eigen(tl,symmetric=TRUE)$vector[,length(phi_es)])
@@ -517,11 +511,13 @@ if(!missingArg(local.influence)){
 	out_$cw.theta <- cbind(cw.theta,cw2.theta)
 	out_$pr.theta <- cbind(pr.theta,pr2.theta)
 }	  
-}else{out_ <- list(cdfz=cdf(z_es), lpdf=(log(pdf(z_es))-(1/2)*log(phi_es)), censored="FALSE")}
+}else{
+	cdf_es <- cdf(z_es)	
+    out_ <-   list(event=event, cdfz=cdf, lpdf=log(ifelse(event==1,1-cdf_es,pdf(z_es)/sqrt(phi_es))), z_es=z_es, censored="TRUE")
+}
 
  class(out_) <- "ssym"
  out_$call <- match.call()
 
- out_  
-
+out_
 }

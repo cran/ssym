@@ -1,6 +1,16 @@
-exportPattern("^[[:alpha:]]+")
-#export(rvgs, lambda.hat, ncs, psp, np.graph, ssym.nl, ssym.l, influence.ssym, estfun.ssym)
+export(envelope, extra.parameter, ncs, np.graph, psp, rvgs, ssym.nl, ssym.l, ssym.l2)
 
-import(GIGrvg, numDeriv, normalp, Formula, splines)
+#export(AIC.ssym, coef.ssym, fitted.ssym, logLik.ssym, plot.ssym, residuals.ssym, summary.ssym, vcov.ssym)
+
+S3method(AIC, ssym)
+S3method(coef, ssym)
+S3method(fitted, ssym)
+S3method(logLik, ssym)
+S3method(plot, ssym)
+S3method(residuals, ssym)
+S3method(summary, ssym)
+S3method(vcov, ssym)
+
+import(GIGrvg, numDeriv, normalp, Formula, survival)
 
 

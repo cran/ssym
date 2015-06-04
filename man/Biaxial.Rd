@@ -16,7 +16,7 @@ J.R. Rieck and J.R. Nedelman (1991) A log-linear model for the Birnbaum-Saunders
 
 \examples{
 data("Biaxial", package="ssym")
-plot(Biaxial$Work, Biaxial$Life, xlim=range(Biaxial$Work), ylim=range(Biaxial$Life), type="p",
+plot(Biaxial$Work, Biaxial$Life, type="p",
      cex=0.3, lwd=3, ylab="Life", xlab="Work per cycle",
 	 main="Brown and Miller's Biaxial Fatigue Data")
 }

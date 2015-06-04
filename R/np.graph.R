@@ -1,86 +1,105 @@
 np.graph <-
-function(object, which, exp, xlab, ylab, main){
+function(object, which, var, exp, simul, obs, xlab, ylab, xlim, ylim, main){
 
-	if(missingArg(exp))exp <- FALSE
-	if(missingArg(xlab) || !is.character(xlab))xlab <- " "
-	if(missingArg(ylab) || !is.character(ylab))ylab <- " "
-	if(missingArg(main) || !is.character(main))main <- " "
-
+	if(missingArg(simul)) simul <- TRUE
+	if(missingArg(obs)) obs <- FALSE
+	if(missingArg(exp)) exp <- FALSE
+	if(missingArg(main) || !is.character(main)) main <- " "
 
 	if(missingArg(which))
 	stop("The value of the which argument is missing!!",call.=FALSE)
 
 	if(which!=1 & which!=2)
-	stop("value of the which argument provided by the user is invalid!!",call.=FALSE)
-	
+	stop("value of the which argument is invalid!!",call.=FALSE)
+
+	reem <- function(aa,b){
+		 ag <- aa
+		 ag <- sub("(", "", ag,fixed=TRUE)
+		 ag <- sub(")", "", ag,fixed=TRUE)
+		 ag <- sub(b, "", ag,fixed=TRUE)
+		 ag <- strsplit(ag, ",")
+		 ag <- ag[[1]][1]
+		 ag
+	}
+
 	if(which==1){
-		if(object$qm == 0) stop("There are not nonparametric component in the Median/Location submodel!!",call.=FALSE)
-	xx.p <- object$np.mu
-	g <- object$coefs.mu[(object$p+1):length(object$coefs.mu)]
-	resp <- object$z.hat*sqrt(object$phi.fitted) + attr(xx.p,"N")%*%g
-	se <- object$vcov.mu[(object$p+1):length(object$coefs.mu),(object$p+1):length(object$coefs.mu)]
-	typesp <- object$type.mu
+		if(sum(object$qm) == 0) stop("There are not nonparametric components in the Median/Location submodel!!",call.=FALSE)
+	    xb <- colnames(object$model.matrix.mu)[(object$p+1):(length(object$qm)+object$p)]
+		if(missingArg(var) && length(xb)==1) var <- xb
+	    idx2 <- grepl(var,xb,fixed=TRUE)
+		if(sum(idx2) == 0) stop("There is not the nonparametric effect requested by the user!!",call.=FALSE)
+		varx2 <- min(seq(1,length(xb),by=1)[idx2==1])
+		which.mu <- object$which.mu[object$which.mu != ""]
+		posi <- c(0,cumsum(object$qm)) + object$p
+		xx <- object$model.matrix.mu[,(object$p + varx2)]
+		xxm <- eval(parse(text=sub(reem(xb[varx2],which.mu[varx2]),"xx",xb[varx2],fixed=TRUE)))
+		cent <- qr.Q(qr(matrix(1,ncol(attr(xxm,"N")),1)),complete=TRUE)[,-1]
+		psps <- attr(xxm,"N")%*%cent%*%object$theta.mu[(posi[varx2] + 1):posi[varx2+1]]
+		psps2 <- attr(xxm,"N2")%*%cent%*%object$theta.mu[(posi[varx2] + 1):posi[varx2+1]]
+		response <- object$z_es*sqrt(object$phi.fitted) + psps
+		se <- sqrt(diag(attr(xxm,"N2")%*%cent%*%tcrossprod(object$vcov.mu[(posi[varx2] + 1):posi[varx2+1],(posi[varx2] + 1):posi[varx2+1]],attr(xxm,"N2")%*%cent)))
+		if(!simul) nm <- 1 else nm <- length(as.numeric(levels(factor(xx))))
+		if(missingArg(xlab) || !is.character(xlab))xlab <- reem(xb[varx2],which.mu[varx2])
+ 	    if(missingArg(ylab) || !is.character(ylab))ylab <- ifelse(exp,paste("exp(",xb[varx2],")"),xb[varx2])
 	}
 	if(which==2){
-		if(object$q == 0) stop("There are not nonparametric component in the Skewness/Dispersion submodel!!",call.=FALSE)
-	xx.p <- object$np.phi
-	g <- object$coefs.phi[(object$l+1):length(object$coefs.phi)]
-	resp <- log((object$z.hat*sqrt(object$phi.fitted))^2/object$xix) - log(object$phi.fitted) + attr(xx.p,"N")%*%g
-	se <- object$vcov.phi[(object$l+1):length(object$coefs.phi),(object$l+1):length(object$coefs.phi)]
-	typesp <- object$type.phi
+		if(sum(object$q) == 0) stop("There are not nonparametric components in the Skewness/Dispersion submodel!!",call.=FALSE)
+	    xb <- colnames(object$model.matrix.phi)[(object$l+1):(length(object$q)+object$l)]
+		if(missingArg(var) && length(xb)==1) var <- xb
+	    idx2 <- grepl(var,xb,fixed=TRUE)
+		if(sum(idx2) == 0) stop("There is not the nonparametric effect requested by the user!!",call.=FALSE)
+		varx2 <- min(seq(1,length(xb),by=1)[idx2==1])
+		which.phi <- object$which.phi[object$which.phi != ""]
+		posi <- c(0,cumsum(object$q)) + object$l
+		xx <- object$model.matrix.phi[,(object$l + varx2)]
+		xxm <- eval(parse(text=sub(reem(xb[varx2],which.phi[varx2]),"xx",xb[varx2],fixed=TRUE)))
+		cent <- qr.Q(qr(matrix(1,ncol(attr(xxm,"N")),1)),complete=TRUE)[,-1]
+		psps <- attr(xxm,"N")%*%cent%*%object$theta.phi[(posi[varx2] + 1):posi[varx2+1]]
+		response <- log((object$z_es*sqrt(object$phi.fitted))^2/object$xix) - log(object$phi.fitted) + psps
+		psps2 <- attr(xxm,"N2")%*%cent%*%object$theta.phi[(posi[varx2] + 1):posi[varx2+1]]
+		se <- sqrt(diag(attr(xxm,"N2")%*%cent%*%tcrossprod(object$vcov.phi[(posi[varx2] + 1):posi[varx2+1],(posi[varx2] + 1):posi[varx2+1]],attr(xxm,"N2")%*%cent)))
+		if(!simul) nm <- 1 else nm <- length(as.numeric(levels(factor(xx))))
+		if(missingArg(xlab) || !is.character(xlab))xlab <- reem(xb[varx2],which.phi[varx2])
+ 	    if(missingArg(ylab) || !is.character(ylab))ylab <- ifelse(exp,paste("exp(",xb[varx2],")"),xb[varx2])
 	}
 
-	if(typesp==1){
-		x.p <- as.numeric(levels(factor(xx.p)))
-		nm <- length(x.p)
-		se <- sqrt(diag(se))
-	    cont <- 1000
-		ss <- ncs(xx.p)
-	    gam <- solve(attr(xx.p,"R"))%*%t(attr(xx.p,"Q"))%*%g
-		gam <- rbind(0,gam,0)
-		t <- seq(min(x.p),max(x.p),length=cont)
-		nodo <- 1
-		spl <- matrix(0,cont,1)
-	
-		for(i in 1:cont){
-			if(t[i] > x.p[nodo + 1]){
-			  nodo <- nodo + 1
-			}
-			h <- x.p[nodo+1] - x.p[nodo]
-			spl[i] <- ((t[i]-x.p[nodo])*g[nodo+1] + (x.p[nodo+1]-t[i])*g[nodo])/h -
-			          (t[i]-x.p[nodo])*(x.p[nodo+1]-t[i])*((1 + (t[i]-x.p[nodo])/h)*gam[nodo+1]
-					  + (1 + (x.p[nodo+1]-t[i])/h)*gam[nodo])/6
-		}
-	 }else{
-		  iknots <- attr(attr(xx.p,"N"),"knots")
-		  nm <- length(as.numeric(levels(factor(xx.p))))
-		  x.p <- seq(min(xx.p),max(xx.p),length=500)
-		  Bs <- bs(x.p,knots=iknots,degree=3,intercept=TRUE)
-		  spl <- Bs%*%g
-		  g <- spl
-		  se <- sqrt(diag(Bs%*%se%*%t(Bs)))
-		  t <- x.p
-		  }
-
+	  xx2 <- seq(min(xx),max(xx),length=200)
+	  if(missingArg(xlim)) xlim <- range(xx)
 	  if(exp==TRUE){
-	  	  lims <- cbind(exp(g - qnorm(0.025/nm)*se),exp(g + qnorm(0.025/nm)*se))
-	  	  plot(t, exp(spl), xlim=range(xx.p), ylim=range(exp(resp)), type="l", col="blue", xlab="", ylab="", main="")
+	  	  lims <- cbind(exp(psps2 - qnorm(0.025/nm)*se),exp(psps2 + qnorm(0.025/nm)*se))
+	  	  if(missingArg(ylim)) if(obs) ylim <- exp(range(response)) else ylim <- range(lims)
+		  plot(xx2, exp(psps2), xlim=xlim, ylim=ylim, type="l", col="white", xlab=xlab, ylab=ylab)
+		  polygon(c(xx2,xx2[200:1]), c(lims[,1],lims[200:1,2]), col="light gray",border="light gray")
+		  if(obs){
+			  par(new=TRUE)
+			  if(object$censored==FALSE)
+    	      	plot(xx, exp(response), xlim=xlim, ylim=ylim, type="p", cex=0.3, lwd=3, xlab="", ylab="", main="")
+			  else{
+    	      	plot(xx[object$event==0], exp(response[object$event==0]), xlim=xlim, ylim=ylim, type="p", cex=0.3, lwd=3, xlab="", ylab="", main="")
+				par(new=TRUE)
+    	      	plot(xx[object$event==1], exp(response[object$event==1]), xlim=xlim, ylim=ylim, pch="+", xlab="", ylab="", main="")
+			  }
+		  }
 		  par(new=TRUE)
-		  plot(x.p, lims[,1], xlim=range(xx.p), ylim=range(exp(resp)), type="l", col="blue", xlab="", ylab="", main="", lty=3)
-		  par(new=TRUE)
-		  plot(x.p, lims[,2], xlim=range(xx.p), ylim=range(exp(resp)), type="l", col="blue", xlab="", ylab="", main="", lty=3)
-		  par(new=TRUE)
-          plot(xx.p, exp(resp), xlim=range(xx.p), ylim=range(exp(resp)), type="p", cex=0.3, lwd=3, xlab=xlab, ylab=ylab, main=main)
+		  plot(xx2, exp(psps2), xlim=xlim, ylim=ylim, type="l", col="blue", xlab=xlab, ylab=ylab, main=main)
 
 	  }else{
-	  	  lims <- cbind(g - qnorm(0.025/nm)*se,g + qnorm(0.025/nm)*se)
-	  	  plot(t, spl, xlim=range(xx.p), ylim=range(resp), type="l", col="blue", xlab="", ylab="", main="")
+	  	  lims <- cbind(psps2 - qnorm(0.025/nm)*se,psps2 + qnorm(0.025/nm)*se)
+	  	  if(missingArg(ylim)) if(obs) ylim <- range(response) else ylim <- range(lims)
+		  plot(xx2, psps2, xlim=xlim, ylim=ylim, type="l", col="white", xlab=xlab, ylab=ylab)
+		  polygon(c(xx2,xx2[200:1]), c(lims[,1],lims[200:1,2]), col="light gray",border="light gray")
+		  if(obs){
+			  par(new=TRUE)
+			  if(object$censored==FALSE)
+		          plot(xx, response, xlim=xlim, ylim=ylim, type="p", cex=0.3, lwd=3, xlab="", ylab="", main="")
+			  else{
+		          plot(xx[object$event==0], response[object$event==0], xlim=xlim, ylim=ylim, type="p", cex=0.3, lwd=3, xlab="", ylab="", main="")
+				  par(new=TRUE)
+		          plot(xx[object$event==1], response[object$event==1], xlim=xlim, ylim=ylim, pch="+", xlab="", ylab="", main="")
+			  }
+		  }
 		  par(new=TRUE)
-		  plot(x.p, lims[,1], xlim=range(xx.p), ylim=range(resp), type="l", col="blue", xlab="", ylab="", main="", lty=3)
-		  par(new=TRUE)
-		  plot(x.p, lims[,2], xlim=range(xx.p), ylim=range(resp), type="l", col="blue", xlab="", ylab="", main="", lty=3)
-		  par(new=TRUE)
-          plot(xx.p, resp, xlim=range(xx.p), ylim=range(resp), type="p", cex=0.3, lwd=3, xlab=xlab, ylab=ylab, main=main)
+		  plot(xx2, psps2, xlim=xlim, ylim=ylim, type="l", col="blue", xlab=xlab, ylab=ylab, main=main)
 	  }
-	  #list(lims=cbind(x.p,lims),spl=spl,resp=cbind(xx.p,resp),t=t)
+#	  list(xx2=xx2, psps2=psps2, lims=lims, xx=xx, response=response)
 }

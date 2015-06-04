@@ -5,7 +5,7 @@
 \description{
 This data set comes from an experiment comparing the responses of immature and mature goat ovocytes to an hyper-osmotic test. As a compound permeates,
 water reenters the cell, and the cell re-expands until the system reaches an osmotic equilibrium. The results are obtained using immature and ovulated
-(mature) ovocytes exposed to propanediol, a permeable compound. Then, the cell volume during equilibration is recorded at each time \emph{t}.}
+(mature) ovocytes exposed to propanediol, a permeable compound. Then, the cell volume during equilibration is recorded at each time \code{t}.}
 
 \usage{data(Ovocytes)}
 \format{
@@ -19,8 +19,8 @@ water reenters the cell, and the cell re-expands until the system reaches an osm
 \references{
 Huet, S., Bouvier, A., Gruet, M.A. and Jolivet, E. (1996). Statistical Tools for Nonlinear Regression. Springer, New York.
 
-Le Gal F., Gasqui P., Renard J.P. (1994) Differential Osmotic Behavior of Mammalian Oocytes before and after Maturation: A Quantitative Analysis Using
-Goat Oocytes as a Model. Cryobiology, 31: 154-170.
+Le Gal F., Gasqui P., Renard J.P. (1994) Differential Osmotic Behavior of Mammalian Ovocytes before and after Maturation: A Quantitative Analysis Using
+Goat Ovocytes as a Model. Cryobiology, 31: 154-170.
 
 Huet S., Bouvier A., Gruet M.A., Jolivet E. (1996) Statistical Tools for Nonlinear Regression. Springer-Verlag: New York.}
 \examples{

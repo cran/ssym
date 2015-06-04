@@ -2,4 +2,4 @@
 \alias{logLik.ssym}
 \title{logLik.ssym}
 \description{
-\bold{logLik.ssym} extracts the value of the log-likelihood function avaliated at observed data and parameter estimates from an object of class ``"ssym".}
+\bold{logLik.ssym} extracts the value of the log-likelihood function avaliated at observed data and parameter estimates from an object of class \code{ssym}.}

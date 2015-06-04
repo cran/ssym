@@ -22,7 +22,7 @@ Paula, G.A., Leiva, V., Barros, M. and Liu, S. (2012) Robust statistical modelin
 }
 \examples{
 data("Claims", package="ssym")
-plot(Claims$op_time, Claims$total, xlim=range(Claims$op_time), ylim=range(Claims$total),
-     type="p", cex=0.3, lwd=3, ylab="Amount of paid money",xlab="Operational time",
+plot(Claims$op_time, Claims$total, type="p", cex=0.3, lwd=3,
+     ylab="Amount of paid money", xlab="Operational time",
 	 main="Personal Injure Insurance Data")
 }

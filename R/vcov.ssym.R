@@ -1,3 +1,4 @@
 vcov.ssym <-
 function(object, ...){
-list(mu=object$vcov.mu, phi=object$vcov.phi)}
+if(object$censored==FALSE) list(mu=object$vcov.mu, phi=object$vcov.phi)
+else list(mu=object$vcov.mu, phi=object$vcov.phi, cov.mu.phi=object$cov.mu.phi)}
