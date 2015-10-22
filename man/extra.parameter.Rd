@@ -6,12 +6,13 @@
 versus the extra parameter \eqn{\zeta} in the interval/region defined by the arguments \code{lower} and \code{upper}.
 These graphs may be used to choosing the extra parameter value.}
 \usage{
-extra.parameter(object, lower, upper)
+extra.parameter(object, lower, upper, grid)
 }
 \arguments{
-  \item{object}{an object of the class \code{ssym}. This object is obtained from the application of \code{ssym.l()}, \code{ssym.nl()} or \code{ssym.l2()}}
+  \item{object}{an object of the class \code{ssym}. This object is returned by the call to \code{ssym.l()}, \code{ssym.nl()} or \code{ssym.l2()}}
   \item{lower}{lower limit(s) of the interest interval/region for the extra parameter.}
   \item{upper}{upper limit(s) of the interest interval/region for the extra parameter.}
+  \item{grid}{Number of values of the extra parameter where the overall goodness-of-fit statistic and \eqn{-2\textsf{L}(\hat{\theta})} are evaluated.}  
 }
 
 \references{Vanegas, L.H. and Paula, G.A. (2015b) Log-symmetric distributions: statistical properties and parameter estimation. Brazilian Journal of Probability and Statistics (to appear)}

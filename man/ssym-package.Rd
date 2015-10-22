@@ -11,8 +11,8 @@ positive, asymmetric and possibly, censored.}
 \tabular{ll}{
 Package: \tab ssym\cr
 Type: \tab Package\cr
-Version: \tab 1.5.3\cr
-Date: \tab 2015-03-06\cr
+Version: \tab 1.5.4\cr
+Date: \tab 2015-10-21\cr
 License: \tab GPL-2 | GPL-3\cr
 }
 }
@@ -29,7 +29,5 @@ Maintainer: Luis Hernando Vanegas
 data("Snacks", package="ssym")                                    
 fit <- ssym.l(log(texture) ~ type + ncs(week) | type, data=Snacks,
                family='Student', xi=15)     
-summary(fit)
-
-np.graph(fit, which=1, exp=TRUE)
+summary(fit)                                                      
 }

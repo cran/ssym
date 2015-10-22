@@ -9,8 +9,8 @@ of the response variable distribution are explicitly modeled,
 the median using a nonlinear function and the skewness through semi-parametric
 functions, whose nonparametric components may be approximated by natural cubic splines or P-splines.}
 \usage{
-ssym.nl(formula, start, family, xi, data, epsilon, maxiter, subset, local.influence,
-spec, std.out)
+ssym.nl(formula, start, family, xi, data, epsilon, maxiter, subset, link.phi,
+       local.influence, spec, std.out)
 }
 \arguments{
   \item{formula}{a symbolic description of the systematic component of the model to be fitted. See details for further information.}
@@ -22,11 +22,12 @@ spec, std.out)
   \item{data}{an optional data frame, list or environment containing the variables in the model.}
   \item{epsilon}{an optional positive value, which represents the convergence criterion. Default value is 1e-07.}
   \item{maxiter}{an optional positive integer giving the maximal number of iterations for the estimating process. Default value is 1e03.}
-  \item{subset}{an optional expression specifying a subset of individuals to be used in the fitting process.}
+  \item{subset}{an optional expression that specifies a subset of individuals to be used in the fitting process.}
+  \item{link.phi}{an optional character that specifies the link function of the skewness submodel.}
   \item{local.influence}{logical. If TRUE, local influence measures under two perturbation schemes are calculated. Default is \code{FALSE}.}
   \item{spec}{character. The smoothing parameter is estimated by minimizing a overall goodness-of-fit criterion such as AIC or BIC. \code{spec} is an optional
               string to specify the goodness-of-fit measure to be used. Default value is \code{AIC}.}
-  \item{std.out}{logical. If FALSE, just a reduced set of attributes is returned by the model-fitting function. Default is \code{FALSE}.}
+  \item{std.out}{logical. If FALSE, just a reduced set of attributes is returned by the model-fitting function. Default is \code{TRUE}}.
 }
 \details{
 The argument \emph{formula} comprises of three parts (separated by the symbols "~" and "|"), namely: observed response variable in log-scale, predictor of the

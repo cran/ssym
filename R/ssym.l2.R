@@ -1,5 +1,5 @@
 ssym.l2 <-
-function(formula, family, xi, data, epsilon, maxiter, subset, local.influence, spec, std.out){
+function(formula, family, xi, data, epsilon, maxiter, subset, link.mu, link.phi, local.influence, spec, std.out){
 
 if(family!="Normal" & family!="Slash" & family!="Hyperbolic" & family!="Sinh-t" & family!="Sinh-normal" & family!="Contnormal" & family!="Powerexp" & family!="Student")
 stop("family of distributions specified by the user is not supported!!",call.=FALSE)
@@ -7,6 +7,20 @@ stop("family of distributions specified by the user is not supported!!",call.=FA
 if(family=="Slash" | family=="Hyperbolic" | family=="Sinh-t" | family=="Sinh-normal" | family=="Contnormal" | family=="Powerexp" | family=="Student"){
   if(missingArg(xi)) stop("for the family of distributions specified by the user an extra parameter is required!!", call.=FALSE) 
 }
+
+if(missingArg(link.mu)) link.mu <- "identity"
+if(link.mu=="logarithmic") link.mu <- "log"
+if(link.mu=="exponential") link.mu <- "exp"
+if(link.mu=="reciprocal") link.mu <- "recip"
+if(link.mu!="identity" & link.mu!="log" & link.mu!="exp" & link.mu!="recip") 
+stop("link.mu function specified by the user is not supported!!",call.=FALSE)
+if(missingArg(std.out) || std.out!="FALSE") std.out <- "TRUE"
+
+if(missingArg(link.phi)) link.phi <- "log"
+if(link.phi=="logarithmic") link.phi <- "log"
+if(link.phi!="identity" & link.phi!="log") 
+stop("link.phi function specified by the user is not supported!!",call.=FALSE)
+
 	 reem <- function(aa,b){
 		 ag <- aa
 		 ag <- sub("(", "", ag,fixed=TRUE)
@@ -77,6 +91,7 @@ if(missingArg(maxiter)) maxiter <- 1000
 	 type.mu <- matrix(1,sum(idx3),1)
 	 type.mu[idx2==1] <- 2
 	 pspm <- matrix(0,n,1)
+	 model.matrix.mu <- matrix(0,n,1)
 	 qm <- 0
 	 penm <- matrix(0,1,1)
 	 centm <- matrix(0,1,1)
@@ -94,6 +109,7 @@ if(missingArg(maxiter)) maxiter <- 1000
 		p <- ncol(X)
 		pspm <- cbind(pspm,X)
 		penm <- bdiag(penm,matrix(0,p,p))
+		model.matrix.mu <- cbind(model.matrix.mu,X)
 	 }else{p <- 0}
 	 if(sum(idx3) >= 1){
 		for(i in 1:length(idx3)){
@@ -114,10 +130,14 @@ if(missingArg(maxiter)) maxiter <- 1000
 	    statusm <- statusm[-1]
 		vnpsm <- as.matrix(x[subset,idx3==1])
 		colnames(vnpsm) <- colnames(x)[idx3==1]
+		model.matrix.mu <- cbind(model.matrix.mu,vnpsm)		
 		qm <- qm[-1]
 	 }
 	 pspm <- as.matrix(pspm[,-1])
 	 penm <- as.matrix(penm[-1,-1])
+	 col.m2 <- colnames(model.matrix.mu)[-1]
+	 model.matrix.mu <- as.matrix(model.matrix.mu[,-1])
+	 colnames(model.matrix.mu) <- col.m2
 	 
 	 w <- model.matrix(ll, data)
 	 wa  <- "ncs("	 
@@ -132,6 +152,7 @@ if(missingArg(maxiter)) maxiter <- 1000
 	 type.phi <- matrix(1,sum(idw3),1)
 	 type.phi[idw2==1] <- 2
 	 pspp <- matrix(0,n,1)
+	 model.matrix.phi <- matrix(0,n,1)
 	 q <- 0
 	 penp <- matrix(0,1,1)
 	 lambdas.phi <- matrix(0,1,1)		
@@ -149,6 +170,7 @@ if(missingArg(maxiter)) maxiter <- 1000
 		l <- ncol(W)
 		pspp <- cbind(pspp,W)
 		penp <- bdiag(penp,matrix(0,l,l))
+	    model.matrix.phi <- cbind(model.matrix.phi,W)
 	 }else{l <- 0}
 	 if(sum(idw3) >= 1){
 		for(i in 1:length(idw3)){
@@ -169,10 +191,14 @@ if(missingArg(maxiter)) maxiter <- 1000
 	statusp <- statusp[-1]
 	vnpsp <- as.matrix(w[subset,idw3==1])
 	colnames(vnpsp) <- colnames(w)[idw3==1]
+	model.matrix.phi <- cbind(model.matrix.phi,vnpsp)	
 	q <- q[-1]
 	}	
 	pspp <- as.matrix(pspp[,-1])
 	penp <- as.matrix(penp[-1,-1])
+	col.m2 <- colnames(model.matrix.phi)[-1]
+	model.matrix.phi <- as.matrix(model.matrix.phi[,-1])
+	colnames(model.matrix.phi) <- col.m2
 	pspp2 <- crossprod(pspp)
 	
 if(family=="Normal"){
@@ -317,12 +343,53 @@ if(family=="Slash"){
 	xix <- 2*integrate(gfg,0,60)$value
 }
 
+if(link.mu=="identity"){
+	l.mu <- function(y) y
+	l.mu.i <- function(y) y
+	l1.mu <- function(mu) matrix(1,length(mu),1)
+	l2.mu <- function(mu) matrix(0,length(mu),1)	
+	attr(l1.mu,"link") <- "identity"}
+else{if(link.mu=="log"){
+		l.mu <- function(y) log(y)
+		l.mu.i <- function(y) exp(y)
+		l1.mu <- function(mu) mu
+		l2.mu <- function(mu) -1/mu^2	
+		attr(l1.mu,"link") <- "logarithmic"}
+	 if(link.mu=="exp"){
+		l.mu <- function(y) exp(y)
+		l.mu.i <- function(y) log(y)
+		l1.mu <- function(mu) 1/mu
+		l2.mu <- function(mu) mu	
+		attr(l1.mu,"link") <- "exponential"}
+	 if(link.mu=="recip"){
+		l.mu <- function(y) 1/y
+		l.mu.i <- function(y) 1/y
+		l1.mu <- function(mu) -mu^2
+		l2.mu <- function(mu) 2/mu^3	
+		attr(l1.mu,"link") <- "reciprocal"}		
+}
+
+if(link.phi=="log"){
+	l.phi <- function(y) log(y)
+	l.phi.i <- function(y) exp(y)
+	l1.phi <- function(phi) matrix(1,length(phi),1)
+	l2.phi <- function(phi) -1/phi^2	
+	attr(l1.phi,"link") <- "logarithmic"}
+else{
+	l.phi <- function(y) y
+	l.phi.i <- function(y) y
+	l1.phi <- function(phi) 1/phi
+	l2.phi <- function(phi) matrix(0,length(phi),1)	
+	attr(l1.phi,"link") <- "identity"}
+
+
 h <- function(z) pdf(z)/(1-cdf(z))
-objeto <- list(maxiter=maxiter, epsilon=epsilon, y=y, event=event, family=family, xi=xi, v=v, vp=vp, p=p, qm=qm, l=l, h=h, q=q, pspm=pspm, pspp=pspp, penm=penm, penp=penp, orig="linear")
+objeto <- list(maxiter=maxiter, epsilon=epsilon, y=y, l.mu.i=l.mu.i, l.phi.i=l.phi.i, l1.mu=l1.mu, l1.phi=l1.phi, l2.mu=l2.mu, l2.phi=l2.phi, 
+event=event, family=family, xi=xi, v=v, vp=vp, p=p, qm=qm, l=l, h=h, q=q, pspm=pspm, pspp=pspp, penm=penm, penp=penp, orig="linear")
 if(family=="Slash" || family=="Hyperbolic" || family=="Contnormal" || family=="Student") objeto$vb <- vb
 
-thetam0 <- solve(crossprod(pspm[event==0,]) + penm)%*%crossprod(pspm[event==0,],y[event==0])
-thetap0 <- solve(crossprod(pspp[event==0,]) + penp)%*%crossprod(pspp[event==0,],log((y[event==0]-pspm[event==0,]%*%thetam0)^2/ifelse(is.null(xix),1,xix)))
+thetam0 <- solve(crossprod(pspm[event==0,]) + penm)%*%crossprod(pspm[event==0,],l.mu(y[event==0]))
+thetap0 <- solve(crossprod(pspp[event==0,]) + penp)%*%crossprod(pspp[event==0,],l.phi((y[event==0]-l.mu.i(pspm[event==0,]%*%thetam0))^2/ifelse(is.null(xix),1,xix)))
 theta0 <- c(thetam0,thetap0)
 
 if(any(statusm == "unknown")  | any(statusp == "unknown")){
@@ -341,11 +408,12 @@ if(any(statusm == "unknown")  | any(statusp == "unknown")){
 				objeto$penm <- penm2
 				objeto$penp <- penp2
 
-				if(family=="Slash" || family=="Hyperbolic" || family=="Contnormal" || family=="Student")  vP <- itpEC(theta0,objeto)
+				if(family=="Contnormal" || family=="Student")  vP <- itpEC(theta0,objeto)
 				else vP <- itpEC2(theta0,objeto)
+				vP <- itpEC2(theta0,objeto)
 
-				mu_es <- pspm%*%vP[1:(p+sum(qm))]
-				phi_es <- exp(pspp%*%vP[(p+sum(qm)+1):(p+sum(qm)+l+sum(q))])
+				mu_es <- l.mu.i(pspm%*%vP[1:(p+sum(qm))])
+				phi_es <- l.phi.i(pspp%*%vP[(p+sum(qm)+1):(p+sum(qm)+l+sum(q))])
 				z_es <- (y - mu_es)/sqrt(phi_es)
 				h_es <- ifelse(event==1,h(z_es),0)
 				v_es <- ifelse(event==1,0,v(z_es))
@@ -353,12 +421,14 @@ if(any(statusm == "unknown")  | any(statusp == "unknown")){
 				gle <- 0
 			    if(sum(qm) > 0 ){
 				  Dc <- ifelse(event==1,h_es*(h_es-v_es*z_es),vp_es*z_es + v_es)
-				  temp <- crossprod(pspm,pspm*matrix(Dc/phi_es,n,ncol(pspm)))
+		          Dcdot   <- l1.mu(mu_es)*l2.mu(mu_es)*ifelse(event==1,h_es,v_es*z_es)
+				  temp <- crossprod(pspm,pspm*matrix(l1.mu(mu_es)^2*(Dc/phi_es + Dcdot/sqrt(phi_es)),n,ncol(pspm)))
 	              gle <- gle + sum(diag(solve(temp + penm2)%*%temp))
 				}
 				if(sum(q) > 0 ){
 	              Dcab <- ifelse(event==1,h_es + z_es*h_es*(h_es-v_es*z_es),vp_es*z_es^2 + 2*v_es*z_es)*z_es/4
-				  temp <- crossprod(pspp,pspp*matrix(Dcab,n,ncol(pspp)))
+         		  Dcdot2   <- (1 + phi_es*phi_es*l1.phi(phi_es)*l2.phi(phi_es))*ifelse(event==1,h_es*z_es,v_es*z_es^2 - 1)/2
+				  temp <- crossprod(pspp,pspp*matrix(l1.phi(phi_es)^2*(Dcab + Dcdot2),n,ncol(pspp)))
 	              gle <- gle + sum(diag(solve(temp + penp2)%*%temp))
 				}
 				-2*sum(log(ifelse(event==1,1-cdf(z_es),pdf(z_es)/sqrt(phi_es)))) + spe*gle
@@ -392,28 +462,30 @@ else vP <- itpEC2(theta0,objeto)
 
 thetam <- vP[1:(p+sum(qm))]
 thetap <- vP[(p+sum(qm)+1):(p+sum(qm)+l+sum(q))]
-mu_es <- pspm%*%thetam
-phi_es <- exp(pspp%*%thetap)
+mu_es <- l.mu.i(pspm%*%thetam)
+phi_es <- l.phi.i(pspp%*%thetap)
 z_es <- (y - mu_es)/sqrt(phi_es)
 
-if(missingArg(std.out)){
+if(std.out=="TRUE"){
 
 	h_es <- ifelse(event==1,h(z_es),0)
 	v_es <- ifelse(event==1,0,v(z_es))
 	vt_es <- ifelse(event==1,h_es/z_es,v_es)
 	s_es <- ifelse(event==1,h_es*z_es + 1,v_es*z_es^2)
-	score.mu <- crossprod(pspm,vt_es*z_es/sqrt(phi_es)) - penm%*%thetam
-	score.phi <- crossprod(pspp,(s_es - 1)/2) - penp%*%thetap
+	score.mu <- crossprod(pspm,l1.mu(mu_es)*vt_es*z_es/sqrt(phi_es)) - penm%*%thetam
+	score.phi <- crossprod(pspp,l1.phi(phi_es)*(s_es - 1)/2) - penp%*%thetap
 	
 	Ltt <- matrix(0,ncol(pspm)+ncol(pspp),ncol(pspm)+ncol(pspp))
 	vp_es <- ifelse(event==1,0,vp(z_es))
 	Dc   <- ifelse(event==1,h_es*(h_es-v_es*z_es),vp_es*z_es + v_es)
+	Dcdot   <- l1.mu(mu_es)*l2.mu(mu_es)*ifelse(event==1,h_es,v_es*z_es)
+	Dcdot2   <- (1 + phi_es*phi_es*l1.phi(phi_es)*l2.phi(phi_es))*ifelse(event==1,h_es*z_es,v_es*z_es^2 - 1)/2
 	Dcar <- ifelse(event==1,h_es + z_es*h_es*(h_es-v_es*z_es),vp_es*z_es^2 + 2*v_es*z_es)/2
 	Dcab <- Dcar*z_es/2
-	Ltt[1:ncol(pspm),1:ncol(pspm)] <- -crossprod(pspm,pspm*matrix(Dc/phi_es,n,ncol(pspm)))
-	Ltt[(ncol(pspm)+1):(ncol(pspm)+ncol(pspp)),1:ncol(pspm)] <- -crossprod(pspp,pspm*matrix(Dcar/sqrt(phi_es),n,ncol(pspm)))
+	Ltt[1:ncol(pspm),1:ncol(pspm)] <- -crossprod(pspm,pspm*matrix(l1.mu(mu_es)^2*(Dc/phi_es + Dcdot/sqrt(phi_es)),n,ncol(pspm)))
+	Ltt[(ncol(pspm)+1):(ncol(pspm)+ncol(pspp)),1:ncol(pspm)] <- -crossprod(pspp,pspm*matrix(l1.mu(mu_es)*l1.phi(phi_es)*(Dcar/sqrt(phi_es)),n,ncol(pspm)))
 	Ltt[1:ncol(pspm),(ncol(pspm)+1):(ncol(pspm)+ncol(pspp))] <- t(Ltt[(ncol(pspm)+1):(ncol(pspm)+ncol(pspp)),1:ncol(pspm)])
-	Ltt[(ncol(pspm)+1):(ncol(pspm)+ncol(pspp)),(ncol(pspm)+1):(ncol(pspm)+ncol(pspp))] <- -crossprod(pspp,pspp*matrix(Dcab,n,ncol(pspp)))
+	Ltt[(ncol(pspm)+1):(ncol(pspm)+ncol(pspp)),(ncol(pspm)+1):(ncol(pspm)+ncol(pspp))] <- -crossprod(pspp,pspp*matrix(l1.phi(phi_es)^2*(Dcab + Dcdot2),n,ncol(pspp)))
 	
 	vcov.theta <- solve(-Ltt + bdiag(penm,penp))
 	if(sum(q)>0 || sum(qm)>0) vcov.theta <- crossprod(vcov.theta,tcrossprod(-Ltt,vcov.theta))
@@ -460,24 +532,23 @@ if(missingArg(std.out)){
 	out_ <-   list(p=p,qm=qm,l=l,q=q,y=y, event=event, score.mu=score.mu,score.phi=score.phi,vcov.mu=vcov.theta[1:ncol(pspm),1:ncol(pspm)],
 	               cov.mu.phi=vcov.theta[1:ncol(pspm),(ncol(pspm)+1):(ncol(pspm)+ncol(pspp))], h=h, 
 	               vcov.phi=vcov.theta[(ncol(pspm)+1):(ncol(pspm)+ncol(pspp)),(ncol(pspm)+1):(ncol(pspm)+ncol(pspp))], family=family,xi=xi,
-	               model.matrix.mu=X, model.matrix.phi=W, deviance.mu=ifelse(event==1,-2*log(1-cdf_es),deviance.mu(z_es)), gle.mu=gle.mu,
+	               model.matrix.mu=model.matrix.mu, model.matrix.phi=model.matrix.phi, deviance.mu=ifelse(event==1,-2*log(1-cdf_es),deviance.mu(z_es)), gle.mu=gle.mu,
 				   deviance.phi=(ifelse(event==1,-2*log(1-cdf_es),deviance.phi(z_es)) + ifelse(event==1 & z_es>0,-2*log(2),0)), gle.phi=gle.phi, 
-				   z_es=z_es, theta.mu=thetam, theta.phi=thetap, cdfz=cdf, lpdf=log(ifelse(event==1,1-cdf_es,pdf(z_es)/sqrt(phi_es))), xix=xix, 
-				   mu.fitted=mu_es, phi.fitted=phi_es, orig="linear", pspm=pspm, pspp=pspp, penm=penm, penp=penp, censored="TRUE")
+				   z_es=z_es, theta.mu=thetam, theta.phi=thetap, cdfz=cdf_es, cdf=cdf, lpdf=log(ifelse(event==1,1-cdf_es,pdf(z_es)/sqrt(phi_es))), xix=xix, 
+				   mu.fitted=mu_es, phi.fitted=phi_es, orig="linear", pspm=pspm, pspp=pspp, penm=penm, penp=penp, censored="TRUE",
+				   l.mu=l.mu, l.phi=l.phi, l.mu.i=l.mu.i, l.phi.i=l.phi.i, l1.mu=l1.mu, l1.phi=l1.phi)
 	
 	if(sum(qm)>0){
 	  out_$which.mu <- which.mu
 	  out_$lambdas.mu <- lambdas.mu
 	  out_$stes.mu <- stes.mu
 	  out_$type.mu <- type.mu
-	  out_$model.matrix.mu <- cbind(out_$model.matrix.mu,vnpsm)
 	}
 	if(sum(q)>0){
 	  out_$which.phi <- which.phi
 	  out_$lambdas.phi <- lambdas.phi
 	  out_$stes.phi <- stes.phi
 	  out_$type.phi <- type.phi
-	  out_$model.matrix.phi <- cbind(out_$model.matrix.phi,vnpsp)
 	}
 
 if(!missingArg(local.influence)){
@@ -486,7 +557,7 @@ if(!missingArg(local.influence)){
 	Ltt2 <- matrix(0,ncol(pspm)+ncol(pspp),ncol(pspm)+ncol(pspp))	
 	Ltt2[(ncol(pspm)+1):(ncol(pspm)+ncol(pspp)),(ncol(pspm)+1):(ncol(pspm)+ncol(pspp))] <- solve(Lgg)
 
-	delta <- rbind(t(pspm*matrix(vt_es*z_es/sqrt(phi_es),length(phi_es),ncol(pspm))), (1/2)*t(matrix(s_es-1,length(phi_es),ncol(pspp))*pspp))
+	delta <- rbind(t(pspm*matrix(l1.mu(mu_es)*vt_es*z_es/sqrt(phi_es),length(phi_es),ncol(pspm))), (1/2)*t(matrix(l1.phi(phi_es)*(s_es-1),length(phi_es),ncol(pspp))*pspp))
 	tl <- t(delta)%*%(solve(Ltt)-Ltt2)%*%delta
 	tl <- tl/sqrt(sum(diag(t(tl)%*%tl)))
 	cw <- abs(eigen(tl,symmetric=TRUE)$vector[,length(phi_es)])
@@ -496,7 +567,7 @@ if(!missingArg(local.influence)){
 	cw.theta <- abs(eigen(tl,symmetric=TRUE)$vector[,length(y)])
 	cw2.theta <- abs(diag(tl))
 	
-	delta <- rbind(t(pspm*matrix(Dc/phi_es,length(phi_es),ncol(pspm))),t(matrix(Dcar/sqrt(phi_es),length(phi_es),ncol(pspp))*pspp))
+	delta <- rbind(t(pspm*matrix(l1.mu(mu_es)*Dc/phi_es,length(phi_es),ncol(pspm))),t(matrix(l1.phi(phi_es)*Dcar/sqrt(phi_es),length(phi_es),ncol(pspp))*pspp))
 	tl2 <- t(delta)%*%(solve(Ltt)-Ltt2)%*%delta
 	tl2 <- tl2/sqrt(sum(diag(t(tl2)%*%tl2)))
 	pr <- abs(eigen(tl2,symmetric=TRUE)$vector[,length(y)])

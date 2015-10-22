@@ -1,8 +1,15 @@
 ssym.nl <-
-function(formula, start, family, xi, data, epsilon, maxiter, subset, local.influence, spec, std.out){
+function(formula, start, family, xi, data, epsilon, maxiter, subset, link.phi, local.influence, spec, std.out){
 
 if(family!="Normal" & family!="Slash" & family!="Hyperbolic" & family!="Sinh-t" & family!="Sinh-normal" & family!="Contnormal" & family!="Powerexp" & family!="Student")
 stop("family of distributions specified by the user is not supported!!",call.=FALSE)
+
+if(missingArg(link.phi)) link.phi <- "log"
+if(link.phi=="logarithmic") link.phi <- "log"
+if(link.phi!="identity" & link.phi!="log") 
+stop("link.phi function specified by the user is not supported!!",call.=FALSE)
+if(missingArg(std.out) || std.out!="FALSE") std.out <- "TRUE"
+
 
 if(family=="Slash" | family=="Hyperbolic" | family=="Sinh-t" | family=="Sinh-normal" | family=="Contnormal" | family=="Powerexp" | family=="Student"){
   if(missingArg(xi)) stop("for the family of distributions specified by the user an extra parameter is required!!", call.=FALSE) 
@@ -47,7 +54,7 @@ if(family=="Slash" | family=="Hyperbolic" | family=="Sinh-t" | family=="Sinh-nor
         data <- environment(formula)
 
 	if(sum(is.na(match(names(start),all.vars(formula))))>0)
-	stop("Some of the specified parameters in the argument start do not appear in the nonlinear function to be fitted!!",call.=FALSE)
+	stop("Some of the specified parameters in the argument start are not involved in the nonlinear function to be fitted!!",call.=FALSE)
 
 	formula <- Formula(formula)
 	if (length(formula)[2L] < 2L)
@@ -81,6 +88,7 @@ if(family=="Slash" | family=="Hyperbolic" | family=="Sinh-t" | family=="Sinh-nor
     }   
 	penm <- matrix(0,p,p)
 	pspm <- GradD(start)
+
 	
 	 w <- model.matrix(ll, data)
 	 wa  <- "ncs("	 
@@ -95,6 +103,7 @@ if(family=="Slash" | family=="Hyperbolic" | family=="Sinh-t" | family=="Sinh-nor
 	 type.phi <- matrix(1,sum(idw3),1)
 	 type.phi[idw2==1] <- 2
 	 pspp <- matrix(0,n,1)
+	 model.matrix.phi <- matrix(0,n,1)	 
 	 q <- 0
 	 penp <- matrix(0,1,1)
 	 lambdas.phi <- matrix(0,1,1)		
@@ -112,6 +121,7 @@ if(family=="Slash" | family=="Hyperbolic" | family=="Sinh-t" | family=="Sinh-nor
 		l <- ncol(W)
 		pspp <- cbind(pspp,W)
 		penp <- bdiag(penp,matrix(0,l,l))
+		model.matrix.phi <- cbind(model.matrix.phi,W)
 	 }else{l <- 0}
 	 if(sum(idw3) >= 1){
 		for(i in 1:length(idw3)){
@@ -132,11 +142,16 @@ if(family=="Slash" | family=="Hyperbolic" | family=="Sinh-t" | family=="Sinh-nor
 	statusp <- statusp[-1]
 	vnpsp <- as.matrix(w[subset,idw3==1])
 	colnames(vnpsp) <- colnames(w)[idw3==1]
+    model.matrix.phi <- cbind(model.matrix.phi,vnpsp)	
 	q <- q[-1]
 	}	
 	pspp <- as.matrix(pspp[,-1])
 	penp <- as.matrix(penp[-1,-1])
     pspp2 <- crossprod(pspp)
+	col.m2 <- colnames(model.matrix.phi)[-1]
+	model.matrix.phi <- as.matrix(model.matrix.phi[,-1])
+	colnames(model.matrix.phi) <- col.m2
+
 	
 if(family=="Normal"){
 	xi <- 0
@@ -293,9 +308,27 @@ if(family=="Slash"){
 	xix <- 2*integrate(gfg,0,60)$value
 }
 
-objeto <- list(maxiter=maxiter, mu=mu, GradD=GradD, epsilon=epsilon, y=y, family=family, xi=xi, dg=dg, fg=fg, v=v, l=l, q=q, p=p, qm=qm, pspp=pspp, pspm=pspm, penm=penm, orig="nonlinear")
+l.mu <- function(y) y
+l.mu.i <- function(y) y
+l1.mu <- function(mu) matrix(1,length(mu),1)
+attr(l1.mu,"link") <- "identity"
+
+if(missingArg(link.phi) || link.phi=="log"){
+	l.phi <- function(y) log(y)
+	l.phi.i <- function(y) exp(y)
+	l1.phi <- function(phi) matrix(1,length(phi),1)
+	l2.phi <- function(phi) -1/phi^2	
+	attr(l1.phi,"link") <- "logarithmic"}
+else{
+	l.phi <- function(y) y
+	l.phi.i <- function(y) y
+	l1.phi <- function(phi) 1/phi
+	l2.phi <- function(phi) matrix(0,length(phi),1)	
+	attr(l1.phi,"link") <- "identity"}
+	
+objeto <- list(maxiter=maxiter, l.mu=l.mu, l.phi=l.phi, l.mu.i=l.mu.i, l.phi.i=l.phi.i, l1.mu=l1.mu, l1.phi=l1.phi, mu=mu, GradD=GradD, epsilon=epsilon, y=y, family=family, xi=xi, dg=dg, fg=fg, v=v, l=l, q=q, p=p, qm=qm, pspp=pspp, pspm=pspm, penm=penm, orig="nonlinear")
 thetam0 <- start
-thetap0 <- solve(crossprod(pspp) + penp)%*%crossprod(pspp,log((y-mu(thetam0))^2/ifelse(is.null(xix),1,xix)))
+thetap0 <- solve(crossprod(pspp) + penp)%*%crossprod(pspp,l.phi((y-mu(thetam0))^2/ifelse(is.null(xix),1,xix)))
 theta0 <- c(thetam0,thetap0)
 
 if(any(statusp == "unknown")){
@@ -313,11 +346,11 @@ if(any(statusp == "unknown")){
 				}
 				
 				mu_es <- mu(vP[1:(p+sum(qm))])
-				phi_es <- exp(pspp%*%vP[(p+sum(qm)+1):(p+sum(qm)+l+sum(q))])
+				phi_es <- l.phi.i(pspp%*%vP[(p+sum(qm)+1):(p+sum(qm)+l+sum(q))])
 				z_es <- (y - mu_es)/sqrt(phi_es)
 
+			    if(attr(l1.phi,"link")!="logarithmic") pspp2 <- crossprod(pspp*matrix(l1.phi(phi_es),n,ncol(pspp)))
 			    gle <- sum(diag(solve(pspp2 + (4/(fg-1))*penp2)%*%pspp2))
-
 				
 				-2*sum(log(pdf(z_es)) -(1/2)*log(phi_es)) + spe*gle
 	}
@@ -350,15 +383,16 @@ else{if( (family=="Powerexp" && xi < 0) || (family=="Sinh-normal") || (family=="
 thetam <- vP[1:p]
 thetap <- vP[(p+1):(p+l+sum(q))]
 mu_es <- mu(thetam)
-phi_es <- exp(pspp%*%thetap)
+phi_es <- l.phi.i(pspp%*%thetap)
 z_es <- (y - mu_es)/sqrt(phi_es)
 v_es <- v(z_es)
 
-if(missingArg(std.out)){
+if(std.out=="TRUE"){
 	pspm <- GradD(thetam)
-	score.mu <- crossprod(pspm,v_es*z_es/sqrt(phi_es))
-	score.phi <- crossprod(pspp,(v_es*z_es^2 - 1)/2) - penp%*%thetap
-	vcov.mu <- solve(dg*crossprod(pspm,pspm*matrix(1/phi_es,n,ncol(pspm))))
+	score.mu <- crossprod(pspm,z_es*v_es*z_es/sqrt(phi_es))
+	score.phi <- crossprod(pspp,l1.phi(phi_es)*(v_es*z_es^2 - 1)/2) - penp%*%thetap
+	vcov.mu <- solve(dg*crossprod(pspm,pspm*matrix(l1.mu(z_es)^2/phi_es,n,ncol(pspm))))
+	if(attr(l1.phi,"link")!="logarithmic") pspp2 <- crossprod(pspp,pspp*matrix(l1.phi(phi_es)^2,n,l+sum(q)))
 	vcov.phi <- solve(((fg-1)/4)*pspp2 + penp)
 	if(sum(q)>0) vcov.phi <- crossprod(vcov.phi,tcrossprod(((fg-1)/4)*pspp2,vcov.phi))
 	
@@ -382,9 +416,10 @@ if(missingArg(std.out)){
 	}else gle.phi <- l
 	  
 	out_ <- list(p=p,qm=qm,l=l,q=q,y=y,score.mu=score.mu,score.phi=score.phi,vcov.mu=vcov.mu,vcov.phi=vcov.phi,family=family,xi=xi,mu=mu, GradD=GradD,
-	               model.matrix.mu=GradD(thetam), model.matrix.phi=W, deviance.mu=deviance.mu(z_es), deviance.phi=deviance.phi(z_es), deviance.mu.f=deviance.mu, deviance.phi.f=deviance.phi,
+	               model.matrix.mu=GradD(thetam), model.matrix.phi=model.matrix.phi, deviance.mu=deviance.mu(z_es), deviance.phi=deviance.phi(z_es), deviance.mu.f=deviance.mu, deviance.phi.f=deviance.phi,
 				   z_es=z_es, theta.mu=thetam, theta.phi=thetap, cdfz=cdf(z_es), lpdf=(log(pdf(z_es))-(1/2)*log(phi_es)), xix=xix, weights=v_es/dg, censored="FALSE",
-				   dg=dg, fg=fg, mu.fitted=mu_es, phi.fitted=phi_es, v=v, orig="nonlinear", pspm=pspm, pspp=pspp, penm=penm, penp=penp, gle.mu=gle.mu, gle.phi=gle.phi)
+				   dg=dg, fg=fg, mu.fitted=mu_es, phi.fitted=phi_es, v=v, orig="nonlinear", pspm=pspm, pspp=pspp, penm=penm, penp=penp, gle.mu=gle.mu, gle.phi=gle.phi,
+				   l.mu=l.mu, l.phi=l.phi, l.mu.i=l.mu.i, l.phi.i=l.phi.i, l1.mu=l1.mu, l1.phi=l1.phi)
 	
 	colnames(out_$model.matrix.mu) <- names(start)			   
 	if(sum(q)>0){
@@ -392,7 +427,6 @@ if(missingArg(std.out)){
 	  out_$lambdas.phi <- lambdas.phi
 	  out_$stes.phi <- stes.phi
 	  out_$type.phi <- type.phi
-	  out_$model.matrix.phi <- cbind(out_$model.matrix.phi,vnpsp)  
 	}
 
 	if(!missingArg(local.influence)){
@@ -404,18 +438,18 @@ if(missingArg(std.out)){
 		vp_es <- vp(z_es)
 		Dc   <- (vp_es*z_es + v_es)
 		Dcar <- (vp_es*z_es^2 + 2*z_es*v_es)/2
-		Dcab <- Dcar*z_es/2
+		Dcab <- (Dcar*z_es + (v_es*z_es^2 - 1)*(1 + phi_es^2*l2.phi(phi_es)*l1.phi(phi_es)))/2
 		
 		Ltt <- matrix(0,ncol(pspm)+ncol(pspp),ncol(pspm)+ncol(pspp))
 		Ltt2 <- matrix(0,ncol(pspm)+ncol(pspp),ncol(pspm)+ncol(pspp))	
 		Ltt[1:ncol(pspm),1:ncol(pspm)] <- -crossprod(pspm,pspm*matrix(Dc/phi_es,n,ncol(pspm))) + splb
-		Ltt[(ncol(pspm)+1):(ncol(pspm)+ncol(pspp)),1:ncol(pspm)] <- -crossprod(pspp,pspm*matrix(Dcar/sqrt(phi_es),n,ncol(pspm)))
+		Ltt[(ncol(pspm)+1):(ncol(pspm)+ncol(pspp)),1:ncol(pspm)] <- -crossprod(pspp,pspm*matrix(l1.phi(phi_es)*Dcar/sqrt(phi_es),n,ncol(pspm)))
 		Ltt[1:ncol(pspm),(ncol(pspm)+1):(ncol(pspm)+ncol(pspp))] <- t(Ltt[(ncol(pspm)+1):(ncol(pspm)+ncol(pspp)),1:ncol(pspm)])
-		Lgg <- -crossprod(pspp,pspp*matrix(Dcab,n,ncol(pspp))) - penp
+		Lgg <- -crossprod(pspp,pspp*matrix(l1.phi(phi_es)^2*Dcab,n,ncol(pspp))) - penp
 		Ltt[(ncol(pspm)+1):(ncol(pspm)+ncol(pspp)),(ncol(pspm)+1):(ncol(pspm)+ncol(pspp))] <- Lgg
 		Ltt2[(ncol(pspm)+1):(ncol(pspm)+ncol(pspp)),(ncol(pspm)+1):(ncol(pspm)+ncol(pspp))] <- solve(Lgg)
 	
-		delta <- rbind(t(pspm*matrix(v_es*z_es/sqrt(phi_es),length(phi_es),ncol(pspm))), (1/2)*t(matrix(v_es*z_es^2-1,length(phi_es),ncol(pspp))*pspp))
+		delta <- rbind(t(pspm*matrix(v_es*z_es/sqrt(phi_es),length(phi_es),ncol(pspm))), (1/2)*t(matrix(l1.phi(phi_es)*(v_es*z_es^2-1),length(phi_es),ncol(pspp))*pspp))
 		tl <- t(delta)%*%(solve(Ltt)-Ltt2)%*%delta
 		tl <- tl/sqrt(sum(diag(t(tl)%*%tl)))
 		cw <- abs(eigen(tl,symmetric=TRUE)$vector[,length(phi_es)])
@@ -425,7 +459,7 @@ if(missingArg(std.out)){
 		cw.theta <- abs(eigen(tl,symmetric=TRUE)$vector[,length(y)])
 		cw2.theta <- abs(diag(tl))
 		
-	    delta <- rbind(t(pspm*matrix(Dc/phi_es,length(phi_es),ncol(pspm))),t(matrix(Dcar/sqrt(phi_es),length(phi_es),ncol(pspp))*pspp))
+	    delta <- rbind(t(pspm*matrix(Dc/phi_es,length(phi_es),ncol(pspm))),t(matrix(l1.phi(phi_es)*Dcar/sqrt(phi_es),length(phi_es),ncol(pspp))*pspp))
 		tl2 <- t(delta)%*%(solve(Ltt)-Ltt2)%*%delta
 		tl2 <- tl2/sqrt(sum(diag(t(tl2)%*%tl2)))
 		pr <- abs(eigen(tl2,symmetric=TRUE)$vector[,length(y)])

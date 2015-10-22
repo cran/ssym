@@ -1,16 +1,37 @@
 export(envelope, extra.parameter, ncs, np.graph, psp, rvgs, ssym.nl, ssym.l, ssym.l2)
 
-#export(AIC.ssym, coef.ssym, fitted.ssym, logLik.ssym, plot.ssym, residuals.ssym, summary.ssym, vcov.ssym)
+
+#export(AIC.ssym, coef.ssym, fitted.ssym, logLik.ssym, plot.ssym, residuals.ssym, summary.ssym, vcov.ssym, estfun.ssym, BIC.ssym, influence.ssym)
+
 
 S3method(AIC, ssym)
+
 S3method(coef, ssym)
+
 S3method(fitted, ssym)
+
 S3method(logLik, ssym)
+
 S3method(plot, ssym)
+
 S3method(residuals, ssym)
+
 S3method(summary, ssym)
+
 S3method(vcov, ssym)
 
-import(GIGrvg, numDeriv, normalp, Formula, survival)
+S3method(estfun, ssym)
+
+S3method(BIC, ssym)
+
+S3method(influence, ssym)
+
+
+import(GIGrvg, numDeriv, normalp, Formula, survival, stats)
+importFrom("sandwich", "estfun")
+importFrom("grDevices", "dev.new")
+importFrom("graphics", "abline", "legend", "par", "plot", "polygon", "title")
+importFrom("methods", "missingArg")
+importFrom("utils", "setTxtProgressBar", "txtProgressBar")
 
 

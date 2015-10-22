@@ -7,7 +7,7 @@
 np.graph(object, which, var, exp, simul, obs, xlab, ylab, xlim, ylim, main)
 }
 \arguments{
-  \item{object}{an object of the class \code{ssym}. This object is obtained from the application of \code{ssym.l()}, \code{ssym.nl()} or \code{ssym.l2()}.}
+  \item{object}{an object of the class \code{ssym}. This object is returned from the call to \code{ssym.l()}, \code{ssym.nl()} or \code{ssym.l2()}.}
   \item{which}{an integer indicating the interest submodel. For example, 1 indicates location submodel, and 2 indicates skewness (or relative dispersion) submodel.}
   \item{var}{character. It allows to choosing the nonparametric effect using the name of the associated explanatory variable.}
   \item{exp}{logical. If \code{TRUE}, the fitted nonparametric effect is plotted in exponential scale. Default is \code{FALSE}.}

@@ -20,7 +20,8 @@ if(object$censored==FALSE){
 	printCoefmat(cmat,digits=3)
 }else cat("Censored %: ",round(100*mean(object$event),2),"\n")
 
-cat("\n ************************** Median/Location submodel **************************\n")
+cat("\n ************************* Median submodel ****************************\n")
+if(object$orig=="linear") cat("link: ", attr(object$l1.mu,"link"),"\n")
 if(object$p>0){
 TAB		 <- cbind(Estimate <- object$theta.mu[1:object$p],
 				  StdErr <- sqrt(diag(as.matrix(object$vcov.mu)))[1:object$p],
@@ -44,7 +45,8 @@ printCoefmat(TAB, P.values=TRUE, has.Pvalue=TRUE,digits=4, signif.legend=FALSE,t
 
 cat("\n **** Deviance: ",round(sum(object$deviance.mu),digits=2),"\n")
 
-cat(" ************************* Skewness/Dispersion submodel ***********************\n")
+cat(" **************************** Dispersion submodel ***********************\n")
+cat("link: ", attr(object$l1.phi,"link"),"\n")
 if(object$l>0){
 TAB		 <- cbind(Estimate <- object$theta.phi[1:object$l],
 				  StdErr <- sqrt(diag(as.matrix(object$vcov.phi)))[1:object$l],
@@ -68,14 +70,14 @@ printCoefmat(TAB, P.values=TRUE, has.Pvalue=TRUE,digits=4, signif.legend=FALSE,t
 
 cat("\n **** Deviance: ",round(sum(object$deviance.phi),digits=2),"\n")
 
-cat(" ******************************************************************************\n")
+cat(" ************************************************************************\n")
 
 if(object$censored==FALSE) temp2 <- qqnorm(qnorm(object$cdfz),plot.it=FALSE)
 else{surv0 <- survfit(Surv(object$z_es,1-object$event)~1)
 ids <- ifelse(surv0$n.event>0,TRUE,FALSE)
 survs <- ifelse(1-surv0$surv[ids] < 1e-30,1 - 1e-30, 1- surv0$surv[ids])
 survs <- ifelse(survs > 1 - 1e-15,1 - 1e-15, survs)
-probs <- object$cdfz(surv0$time[ids])
+probs <- object$cdf(surv0$time[ids])
 probs <- ifelse(probs < 1e-30,1e-30, probs)
 probs <- ifelse(probs > 1 - 1e-15,1 - 1e-15, probs)
 temp2 <- list(x=qnorm(survs),y=qnorm(probs))}

@@ -18,6 +18,10 @@ function(vP,objeto){
 	theta_new <- vP
 	tol <- 1
 	cont <- 0
+	l1.mu <- objeto$l1.mu
+	l1.phi <- objeto$l1.phi
+	l.mu.i <- objeto$l.mu.i
+	l.phi.i <- objeto$l.phi.i
 	u <- function(z) (xi[2] + 1)/(xi[2] + 4*sinh(z)*sinh(z)/(xi[1]^2))
 	v <- function(z,u){
 		  4*sinh(z)*cosh(z)*u/(xi[1]^2*z) - tanh(z)/z
@@ -33,8 +37,8 @@ function(vP,objeto){
 		 theta <- theta_new
 		 if(orig=="nonlinear"){
 		   mu_work <-  objeto$mu(theta)
-		 }else{mu_work <-  pspm%*%theta[1:(p+sum(qm))]}
-		 phi_work <- exp(pspp%*%theta[(p+sum(qm)+1):(p+sum(qm)+sum(q)+l)])
+		 }else{mu_work <-  l.mu.i(pspm%*%theta[1:(p+sum(qm))])}
+		 phi_work <- l.phi.i(pspp%*%theta[(p+sum(qm)+1):(p+sum(qm)+sum(q)+l)])
 		 z_work <- (response-mu_work)/sqrt(phi_work)
 		 tol_EM <- 1
 		 theta_EM_new <- theta
@@ -46,14 +50,14 @@ function(vP,objeto){
 			 if(orig=="nonlinear"){
 		       mu_es <-  objeto$mu(theta_EM)
 		       pspm <- objeto$GradD(theta_EM)
-		     }else{mu_es <-  pspm%*%theta_EM[1:(p+sum(qm))]}
-		     phi_es <- exp(pspp%*%theta_EM[(p+sum(qm)+1):(p+sum(qm)+sum(q)+l)])
+		     }else{mu_es <-  l.mu.i(pspm%*%theta_EM[1:(p+sum(qm))])}
+		     phi_es <- l.phi.i(pspp%*%theta_EM[(p+sum(qm)+1):(p+sum(qm)+sum(q)+l)])
 		     z_es <- (response-mu_es)/sqrt(phi_es)
-			 pspmw <- pspm*matrix(dgs/phi_es,n,p+sum(qm))
+			 pspmw <- pspm*matrix(dgs*l1.mu(mu_es)^2/phi_es,n,p+sum(qm))
 			 v_es_work <- v(z_es,u(z_work))
-			 thetam <- theta_EM[1:(p+sum(qm))] + solve(crossprod(pspm,pspmw) + penm)%*%(crossprod(pspm,v_es_work*(z_es)/sqrt(phi_es))-penm%*%theta_EM[1:(p+sum(qm))])
- 			 psppw <- pspp*matrix((fgs-1)/4,n,l+sum(q))
-			 thetap <- theta_EM[(p+sum(qm)+1):(p+sum(qm)+sum(q)+l)] + solve(crossprod(pspp,psppw) + penp)%*%(crossprod(pspp,(v_es_work*z_es^2 - 1)/2) - penp%*%theta_EM[(p+sum(qm)+1):(p+sum(qm)+sum(q)+l)])
+			 thetam <- theta_EM[1:(p+sum(qm))] + solve(crossprod(pspm,pspmw) + penm)%*%(crossprod(pspm,v_es_work*(z_es)*l1.mu(mu_es)/sqrt(phi_es))-penm%*%theta_EM[1:(p+sum(qm))])
+ 			 psppw <- pspp*matrix(l1.phi(phi_es)^2*(fgs-1)/4,n,l+sum(q))
+			 thetap <- theta_EM[(p+sum(qm)+1):(p+sum(qm)+sum(q)+l)] + solve(crossprod(pspp,psppw) + penp)%*%(crossprod(pspp,l1.phi(phi_es)*(v_es_work*z_es^2 - 1)/2) - penp%*%theta_EM[(p+sum(qm)+1):(p+sum(qm)+sum(q)+l)])
 			 theta_EM_new <- c(thetam,thetap)
 		 	 theta_pd <- ifelse(abs(theta_EM)<=epsilon,1,theta_EM)
 		     tol_EM <- max(abs(theta_EM_new-theta_EM)/abs(theta_pd))

@@ -19,8 +19,8 @@ water reenters the cell, and the cell re-expands until the system reaches an osm
 \references{
 Huet, S., Bouvier, A., Gruet, M.A. and Jolivet, E. (1996). Statistical Tools for Nonlinear Regression. Springer, New York.
 
-Le Gal F., Gasqui P., Renard J.P. (1994) Differential Osmotic Behavior of Mammalian Ovocytes before and after Maturation: A Quantitative Analysis Using
-Goat Ovocytes as a Model. Cryobiology, 31: 154-170.
+Le Gal F., Gasqui P., Renard J.P. (1994) Differential Osmotic Behavior of Mammalian Oocytes before and after Maturation: A Quantitative Analysis Using
+Goat Oocytes as a Model. Cryobiology, 31: 154-170.
 
 Huet S., Bouvier A., Gruet M.A., Jolivet E. (1996) Statistical Tools for Nonlinear Regression. Springer-Verlag: New York.}
 \examples{

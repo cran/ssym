@@ -8,7 +8,7 @@ function(xx, lambda, nknots, all.knots){
 
 	if(all.knots==FALSE){
 		if(missingArg(nknots)){
-		  nknots <- ceiling(length(xx)^(1/3)) + 2
+		  nknots <- floor(length(xx)^(1/3)) + 3
 		  xk <- quantile(xx,prob=seq(0,1,length=nknots))
 		  difv2 <- as.matrix(as.numeric(levels(factor(xk))))
 		  while(length(difv2) < nknots){

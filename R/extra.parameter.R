@@ -1,8 +1,9 @@
 extra.parameter <-
-function(object, lower, upper){
-	new.c <- as.list(object$call)
-	new.c$std.out <- TRUE
-	grid <- 10
+function(object, lower, upper, grid){
+    new.c <- as.list(object$call)
+	new.c$std.out <- FALSE
+	if(missingArg(grid)) grid <- 1
+	grid <- max(floor(abs(grid)),10)
     if(object$family!="Sinh-t" & object$family!="Contnormal"){
 		xis <- seq(lower,upper,length=grid)
 		conver <- matrix(0,grid,1)
@@ -15,14 +16,16 @@ function(object, lower, upper){
 			temp <- try(eval(as.call(new.c),envir = parent.frame()), silent=TRUE)
 			if(is.list(temp)){
 			  if(object$censored==FALSE) temp2 <- qqnorm(qnorm(temp$cdfz),plot.it=FALSE)
-			  else{surv0 <- survfit(Surv(temp$z_es,1-temp$event)~1)
-			  ids <- ifelse(surv0$n.event>0,TRUE,FALSE)
-			  survs <- ifelse(1-surv0$surv[ids] < 1e-30,1 - 1e-30, 1- surv0$surv[ids])
-			  survs <- ifelse(survs > 1 - 1e-15,1 - 1e-15, survs)
-			  probs <- temp$cdfz(surv0$time[ids])
-			  probs <- ifelse(probs < 1e-30,1e-30, probs)
-			  probs <- ifelse(probs > 1 - 1e-15,1 - 1e-15, probs)
-			  temp2 <- list(x=qnorm(survs),y=qnorm(probs))}
+			  else{
+			      surv0 <- survfit(Surv(temp$z_es,1-temp$event)~1)
+				  ids <- ifelse(surv0$n.event>0,TRUE,FALSE)
+				  survs <- ifelse(1-surv0$surv[ids] < 1e-30,1 - 1e-30, 1- surv0$surv[ids])
+				  survs <- ifelse(survs > 1 - 1e-15,1 - 1e-15, survs)
+				  probs <- temp$cdfz(surv0$time[ids])
+			  	  probs <- ifelse(probs < 1e-30,1e-30, probs)
+			  	  probs <- ifelse(probs > 1 - 1e-15,1 - 1e-15, probs)
+			  	  temp2 <- list(x=qnorm(survs),y=qnorm(probs))
+			  }
 			  result[i] <- mean(abs(sort(temp2$x)-sort(temp2$y)))
 			  result2[i] <- -2*sum(temp$lpdf)
 			  conver[i] <- 1
@@ -41,6 +44,7 @@ function(object, lower, upper){
 		result2 <- as.matrix(result2[conver==1])
 		plot(xis,result2,type="b",xlim=range(xis),ylim=range(result2),xlab=expression(eta),ylab="-2*log-Likelihood")
 		title("Behaviour of -2*log-Likelihood")
+
 	}else{
 		xis1 <- seq(lower[1],upper[1],length=grid)
 		xis2 <- seq(lower[2],upper[2],length=3)
@@ -95,4 +99,29 @@ function(object, lower, upper){
 		legend(xlim[1],ylim[2],lty=1,col=c("black","red","blue"),title=expression(eta[2]),legend=c(xis2[1],xis2[2],xis2[3]))
 		title("Behaviour of -2*log-Likelihood")
 	}
+			upsilon <- function(xi){
+			if(length(xi)>1) new.c$xi <- c(xi[1],xi[2])
+			else new.c$xi <- xi
+			temp <- try(eval(as.call(new.c),envir = parent.frame()),silent=TRUE)
+			if(is.list(temp)){
+			  if(object$censored==FALSE) temp2 <- qqnorm(qnorm(temp$cdfz),plot.it=FALSE)
+			  else{
+			      surv0 <- survfit(Surv(temp$z_es,1-temp$event)~1)
+				  ids <- ifelse(surv0$n.event>0,TRUE,FALSE)
+				  survs <- ifelse(1-surv0$surv[ids] < 1e-30,1 - 1e-30, 1- surv0$surv[ids])
+				  survs <- ifelse(survs > 1 - 1e-15,1 - 1e-15, survs)
+				  probs <- temp$cdfz(surv0$time[ids])
+			  	  probs <- ifelse(probs < 1e-30,1e-30, probs)
+			  	  probs <- ifelse(probs > 1 - 1e-15,1 - 1e-15, probs)
+			  	  temp2 <- list(x=qnorm(survs),y=qnorm(probs))
+			  }
+			  mean(abs(sort(temp2$x)-sort(temp2$y)))
+			}
+		 }
+		 upsilon_out <- try(optim(object$xi,upsilon,method="L-BFGS-B",lower=lower,upper=upper),silent=TRUE)		 
+		 if(is.list(upsilon_out)){
+		   if(upsilon_out$convergence==0)
+			 if(length(upsilon_out$par)>1) cat("\n Local minimum of the overall goodness-of-fit statistic at (",round(upsilon_out$par[1],digits=2),",",round(upsilon_out$par[2],digits=2),")\n")
+			 else cat("\n Local minimum of the overall goodness-of-fit statistic at ",round(upsilon_out$par,digits=2),"\n")
+		 }
 }

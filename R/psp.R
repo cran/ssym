@@ -10,7 +10,7 @@ function(xx, lambda, b.order, nknots, diff){
 
 
    if(missingArg(nknots)){
-	   nknots <- min(length(as.matrix(as.numeric(levels(factor(xx))))),ceiling(length(xx)^(1/3))+2)
+	   nknots <- min(length(as.matrix(as.numeric(levels(factor(xx))))),floor(length(xx)^(1/3))+3)
 	   iknots <- quantile(xx,prob=seq(0,1,length=nknots))
 	   difv2 <- as.matrix(as.numeric(levels(factor(iknots))))
 	   while(length(difv2) < nknots){

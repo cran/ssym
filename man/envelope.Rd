@@ -4,12 +4,18 @@
 \description{
 \bold{envelope} is used to calculate and display normal probability plots with simulated envelope of the deviance-type residuals.}
 \usage{
-envelope(object, reps, conf)
+envelope(object, reps, conf, xlab.mu, ylab.mu, main.mu, xlab.phi, ylab.phi, main.phi)
 }
 \arguments{
-  \item{object}{an object of the class \code{ssym}. This object is obtained from the application of \code{ssym.l()} or \code{ssym.nl()}.}
+  \item{object}{an object of the class \code{ssym}. This object returned from the call to \code{ssym.l()} or \code{ssym.nl()}.}
   \item{reps}{a positive integer representing the number of iterations in which the simulated envelopes are based. Default is \code{reps=25}.}
   \item{conf}{value within the interval (0,1) that represents the confidence level of the simulated envelopes. Default is \code{conf=0.95}.}
+  \item{xlab.mu}{character. An optional label for the \emph{x} axis for the graph of the deviance-type residuals for the median submodel.}
+  \item{ylab.mu}{character. An optional label for the \emph{y} axis for the graph of the deviance-type residuals for the median submodel.}
+  \item{main.mu}{character. An optional overall title for the plot for the graph of the deviance-type residuals for the median submodel.}
+  \item{xlab.phi}{character. An optional label for the \emph{x} axis for the graph of the deviance-type residuals for the skewness submodel.}
+  \item{ylab.phi}{character. An optional label for the \emph{y} axis for the graph of the deviance-type residuals for the skewness submodel.}
+  \item{main.phi}{character. An optional overall title for the plot for the graph of the deviance-type residuals for the skewness submodel.}
 }
 
 \details{
