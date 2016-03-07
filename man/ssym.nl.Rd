@@ -126,15 +126,15 @@ under the case-weight and response perturbation schemes.
 #plot(fit)
 
 ###################################################################################
-################### Metsulfuron Data - a log-slah model ########################
+################### Metsulfuron Data - a log-Student-t model ######################
 ###################################################################################
 #data("M4", package="nlreg")
-#fit <- ssym.nl(log(area) ~ log(b1+(b2-b1)/(1+(dose/b4)^b3)) | dose, data=M4,
-#       start = c(b1 = 138, b2 = 2470, b3 = 2, b4 = 0.07), family="Slash", xi=1.4)
+#fit <- ssym.nl(log(area) ~ log(b1+(b2-b1)/(1+(dose/b3)^b4)) | ncs(dose), data=M4,
+#       start = c(b1=4, b2=1400, b3=0.11, b4=1.23), family="Student", xi=6)
 #summary(fit)
 #
 ########################### Extra parameter ###########################
-#extra.parameter(fit,1.0,1.6)
+#extra.parameter(fit,3,10)
 #
 ################## Graph of deviance-type residuals ##################
 #plot(fit)
@@ -187,8 +187,8 @@ under the case-weight and response perturbation schemes.
 #data("ais", package="sn")
 #sex <- ifelse(ais$sex=="male",1,0)
 #ais2 <- data.frame(BMI=ais$BMI,LBM=ais$LBM,sex)
-#start = c(b1=7, b2=0.3, b3=2, b4=0)
-#fit <- ssym.nl(log(BMI) ~ log(b1 + b2*LBM + b3*sex + b4*LBM*sex) | sex + LBM,
+#start = c(b1=7, b2=0.3, b3=2)
+#fit <- ssym.nl(log(BMI) ~ log(b1 + b2*LBM + b3*sex) | sex + LBM,
 #               data=ais2, start=start, family="Normal")
 #summary(fit)
 #
@@ -199,8 +199,9 @@ under the case-weight and response perturbation schemes.
 ################ Daphnia Data - a log-power-exponential model #####################
 ###################################################################################
 #data("daphnia", package="nlreg")
-#fit <- ssym.nl(log(time) ~ log(b1+(b2-b1)/(1+(conc/b4)^b3)) | ncs(conc), data=daphnia,
-#       start = c(b1=0, b2=50 , b3=2, b4=0.2), family="Powerexp", xi=-0.4)
+#fit <- ssym.nl(log(time) ~ log(b1+(b2-b1)/(1+(conc/b4)^b3)) | ncs(conc),
+#           data=daphnia, start = c(b1=0, b2=50 , b3=2, b4=0.2), family="Powerexp",
+#		xi=-0.4)
 #summary(fit)
 #
 ########################### Extra parameter ###########################

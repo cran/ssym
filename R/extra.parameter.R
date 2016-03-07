@@ -31,7 +31,6 @@ function(object, lower, upper, grid){
 			  conver[i] <- 1
 			}
 			i <- i + 1
-			Sys.sleep(0.5);
             setTxtProgressBar(bar,i)
 		}
 		close(bar)
@@ -72,7 +71,6 @@ function(object, lower, upper, grid){
 				  conver[j,i] <- 1
 				}
 				j <- j + 1
-  			    Sys.sleep(0.5);
                 setTxtProgressBar(bar,(i-1)*grid + j)
 			}
 		}
@@ -99,29 +97,4 @@ function(object, lower, upper, grid){
 		legend(xlim[1],ylim[2],lty=1,col=c("black","red","blue"),title=expression(eta[2]),legend=c(xis2[1],xis2[2],xis2[3]))
 		title("Behaviour of -2*log-Likelihood")
 	}
-			upsilon <- function(xi){
-			if(length(xi)>1) new.c$xi <- c(xi[1],xi[2])
-			else new.c$xi <- xi
-			temp <- try(eval(as.call(new.c),envir = parent.frame()),silent=TRUE)
-			if(is.list(temp)){
-			  if(object$censored==FALSE) temp2 <- qqnorm(qnorm(temp$cdfz),plot.it=FALSE)
-			  else{
-			      surv0 <- survfit(Surv(temp$z_es,1-temp$event)~1)
-				  ids <- ifelse(surv0$n.event>0,TRUE,FALSE)
-				  survs <- ifelse(1-surv0$surv[ids] < 1e-30,1 - 1e-30, 1- surv0$surv[ids])
-				  survs <- ifelse(survs > 1 - 1e-15,1 - 1e-15, survs)
-				  probs <- temp$cdfz(surv0$time[ids])
-			  	  probs <- ifelse(probs < 1e-30,1e-30, probs)
-			  	  probs <- ifelse(probs > 1 - 1e-15,1 - 1e-15, probs)
-			  	  temp2 <- list(x=qnorm(survs),y=qnorm(probs))
-			  }
-			  mean(abs(sort(temp2$x)-sort(temp2$y)))
-			}
-		 }
-		 upsilon_out <- try(optim(object$xi,upsilon,method="L-BFGS-B",lower=lower,upper=upper),silent=TRUE)		 
-		 if(is.list(upsilon_out)){
-		   if(upsilon_out$convergence==0)
-			 if(length(upsilon_out$par)>1) cat("\n Local minimum of the overall goodness-of-fit statistic at (",round(upsilon_out$par[1],digits=2),",",round(upsilon_out$par[2],digits=2),")\n")
-			 else cat("\n Local minimum of the overall goodness-of-fit statistic at ",round(upsilon_out$par,digits=2),"\n")
-		 }
 }

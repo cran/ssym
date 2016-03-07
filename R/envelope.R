@@ -38,7 +38,6 @@ while(i <= reps){
 	  dtrm[,i] <- sort(sqrt(object$deviance.mu.f(z_es))*ifelse(z_es>=0,1,-1))
 	  dtrp[,i] <- sort(sqrt(object$deviance.phi.f(z_es))*ifelse(z_es>=0,1,-1))
 	  i <- i + 1
-      Sys.sleep(0.5);
       setTxtProgressBar(bar,i)
 	}
 }
@@ -51,34 +50,37 @@ mp <- apply(dtrp, 1, mean)
 close(bar)
 cat("\n")
 
+par(mfrow=c(1,2))
 if(missingArg(xlab.mu) || !is.character(xlab.mu)) xlab.mu <- "Quantile N(0,1)"
 if(missingArg(ylab.mu) || !is.character(ylab.mu)) ylab.mu <- "Deviance-type residuals"
-if(missingArg(main.mu) || !is.character(main.mu)) main.mu <- " "
+if(missingArg(main.mu) || !is.character(main.mu)) main.mu <- "Median submodel"
+if(missingArg(main.phi) || !is.character(main.phi)) main.phi <- "Skewness/Dispersion submodel"
+
 rmus <- residuals(object)$mu
 faixa <- range(rmus,lim,lsm)
 par(pty="s")
-qqnorm(rmus,xlab=xlab.mu,ylab=ylab.mu, ylim=faixa, type="p", main=main.mu, cex=0.3, lwd=3)
+qqnorm(rmus,xlab=xlab.mu,ylab=ylab.mu, ylim=faixa, type="p", main="", cex=0.3, lwd=3)
 par(new=TRUE)
 qqnorm(lim,axes=FALSE,xlab="",ylab="",type="l",ylim=faixa,lty=1, main="")
 par(new=TRUE)
 qqnorm(lsm,axes=FALSE,xlab="",ylab="", type="l",ylim=faixa,lty=1, main="")
 par(new=TRUE)
-qqnorm(mm,axes=FALSE,xlab="", ylab="", type="l",ylim=faixa,lty=2, main="Median submodel")
+qqnorm(mm,axes=FALSE,xlab="", ylab="", type="l",ylim=faixa,lty=2, main=main.mu)
 
 if(missingArg(xlab.phi) || !is.character(xlab.phi)) xlab.phi <- "Quantile N(0,1)"
 if(missingArg(ylab.phi) || !is.character(ylab.phi)) ylab.phi <- "Deviance-type residuals"
 if(missingArg(main.phi) || !is.character(main.phi)) main.phi <- " "
-dev.new()
+#dev.new()
 rphis <- residuals(object)$phi
 faixa <- range(rphis,lip,lsp)
 par(pty="s")
-qqnorm(rphis,xlab=xlab.phi,ylab=ylab.phi, ylim=faixa, type="p", main=main.phi, cex=0.3, lwd=3)
+qqnorm(rphis,xlab=xlab.phi,ylab=ylab.phi, ylim=faixa, type="p", main="", cex=0.3, lwd=3)
 par(new=TRUE)
 qqnorm(lip,axes=FALSE,xlab="",ylab="",type="l",ylim=faixa,lty=1, main="")
 par(new=TRUE)
 qqnorm(lsp,axes=FALSE,xlab="",ylab="", type="l",ylim=faixa,lty=1, main="")
 par(new=TRUE)
-qqnorm(mp,axes=FALSE,xlab="", ylab="", type="l",ylim=faixa,lty=2, main="Skewness/Dispersion submodel")
+qqnorm(mp,axes=FALSE,xlab="", ylab="", type="l",ylim=faixa,lty=2, main=main.phi)
 
 #list(lim=lim,lsm=lsm,lip=lip,lsp=lsp,mm=mm,mp=mp)
 }

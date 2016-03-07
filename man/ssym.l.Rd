@@ -182,9 +182,34 @@ under the case-weight and response perturbation schemes.
 #     xlab="",ylab="",main="")
 #par(new=TRUE)
 #plot(ecdf(ais$Bfat[id]),xlim=range(ais$Bfat),ylim=c(0,1),verticals=TRUE,
-#     do.points=FALSE,col="dark gray",ylab="Probability.",xlab="",main="ECDF")
+#     do.points=FALSE,col="dark gray",ylab="Probability",xlab="",main="ECDF")
 
 ###################################################################################
+################### ALCOA Aluminium Data - a log-slash model   ####################
+###################################################################################
+
+#data("alcoa", package="robustloggamma")
+#alcoa2 <- data.frame(alcoa$ratio[alcoa$label=="C"])
+#colnames(alcoa2) <- "ratio"
+#
+#fit <- ssym.l(log(ratio) ~ 1, data=alcoa2, family="Slash", xi=0.86)
+#
+################## Plot of the fitted model ##################
+#id <- sort(alcoa2$ratio, index=TRUE)$ix
+#par(mfrow=c(1,2))
+#hist(alcoa2$ratio[id],xlim=c(0.001,0.01),ylim=c(0,600),prob=TRUE,breaks=300,
+#     col="light gray",border="dark gray",xlab="",ylab="",main="")
+#par(new=TRUE)
+#plot(alcoa2$ratio[id],exp(fit$lpdf[id])/alcoa2$ratio[id],xlim=c(0.001,0.01),
+#     ylim=c(0,600),type="l",xlab="",ylab="",main="")
+#	 
+#plot(alcoa2$ratio[id],fit$cdfz[id],xlim=c(0.001,0.01),ylim=c(0,1),type="l",
+#     xlab="",ylab="",main="")
+#par(new=TRUE)
+#plot(ecdf(alcoa2$ratio[id]),xlim=c(0.001,0.01),ylim=c(0,1),verticals=TRUE,
+#     do.points=FALSE,col="dark gray",ylab="Probability",xlab="",main="ECDF")
+
+##################################################################################
 ################### Boston Housing Data - a log-Slash model   ####################
 ###################################################################################
 #data("Boston", package="MASS")

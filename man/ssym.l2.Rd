@@ -87,19 +87,33 @@ under the case-weight and response perturbation schemes.
 #plot(fit)
 
 ####################################################################################
-########## Primary biliary cirrhosis - a Birnbaum-Saunders-t model #################
+########## Primary biliary cirrhosis - a Power-exponential model ###################
 ####################################################################################
-#data("pbc", package="survival")
-#pbc2 <- as.data.frame(pbc[!is.na(pbc$edema) & !is.na(pbc$stage)& !is.na(pbc$bili),])
-#fit <- ssym.l2(Surv(log(time),ifelse(status>=1,0,1) ) ~ factor(edema) + stage +
-#               ncs(bili), data = pbc2, family="Sinh-t", xi=c(0.65,3))
-#summary(fit)			   
+# data("pbc", package="survival")
+# pbc2 <- data.frame(pbc[!is.na(pbc$edema) & !is.na(pbc$stage) & !is.na(pbc$bili),])
+#
+# fit <- ssym.l2(Surv(log(time),ifelse(status>=1,0,1) ) ~ factor(edema) +
+#                stage + ncs(bili), data = pbc2, family="Powerexp",
+#                xi=0.47, local.influence=TRUE)
+# summary(fit)
 #
 ########################### Extra parameter ###########################
 #extra.parameter(fit,c(0.6,3),c(0.9,5))
 #
 ################## Graph of the nonparametric effect ##################
 #np.graph(fit, which=1, exp=TRUE)
+#
+################## Graph of deviance-type residuals ##################
+#plot(fit)
+
+####################################################################################
+################### Myeloma - a Birnbaum-Saunders model ###########################
+####################################################################################
+# data("myeloma", package="ssym")
+#
+#fit <- ssym.l2(Surv(log(t),event) ~ x1 + x2 + x5| -1 + x3, data=myeloma,
+#       family="Sinh-normal", xi=1.8, local.influence=TRUE)
+#summary(fit)
 #
 ################## Graph of deviance-type residuals ##################
 #plot(fit)
@@ -113,6 +127,7 @@ under the case-weight and response perturbation schemes.
 #data("Baboons", package="ssym")
 #fit <- ssym.l2(Surv(-log(t),cs) ~ 1, data=Baboons, family="Powerexp", xi=-0.35)
 #
+#summary(fit)
 ################## Graph of deviance-type residuals ##################
 #plot(fit)
 

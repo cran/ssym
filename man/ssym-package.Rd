@@ -11,8 +11,8 @@ positive, asymmetric and possibly, censored.}
 \tabular{ll}{
 Package: \tab ssym\cr
 Type: \tab Package\cr
-Version: \tab 1.5.4\cr
-Date: \tab 2015-10-21\cr
+Version: \tab 1.5.5\cr
+Date: \tab 2015-03-07\cr
 License: \tab GPL-2 | GPL-3\cr
 }
 }
