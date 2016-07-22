@@ -374,6 +374,7 @@ if(any(statusp == "unknown")){
 	objeto$penm <- penm
 	objeto$penp <- penp
 
+	
 if(family=="Sinh-t"){
 vP <- itpE2(theta0,objeto)}
 else{if( (family=="Powerexp" && xi < 0) || (family=="Sinh-normal") || (family=="Normal") ) vP <- itpE3(theta0,objeto)
@@ -389,7 +390,7 @@ v_es <- v(z_es)
 
 if(std.out=="TRUE"){
 	pspm <- GradD(thetam)
-	score.mu <- crossprod(pspm,z_es*v_es*z_es/sqrt(phi_es))
+	score.mu <- crossprod(pspm,z_es*v_es/sqrt(phi_es))
 	score.phi <- crossprod(pspp,l1.phi(phi_es)*(v_es*z_es^2 - 1)/2) - penp%*%thetap
 	vcov.mu <- solve(dg*crossprod(pspm,pspm*matrix(l1.mu(z_es)^2/phi_es,n,ncol(pspm))))
 	if(attr(l1.phi,"link")!="logarithmic") pspp2 <- crossprod(pspp,pspp*matrix(l1.phi(phi_es)^2,n,l+sum(q)))

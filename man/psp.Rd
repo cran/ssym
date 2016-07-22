@@ -2,7 +2,7 @@
 \alias{psp}
 \title{Tool to build the basis matrix and the penalty matrix of P-splines.}
 \description{
-\bold{psp} builds the basis matrix and the penalty matrix to approximate a smooth function by using a P-spline.}
+\bold{psp} builds the basis matrix and the penalty matrix to approximate a smooth function using a P-spline.}
 \usage{
 psp(xx, lambda, b.order, nknots, diff)
 }
@@ -10,7 +10,8 @@ psp(xx, lambda, b.order, nknots, diff)
   \item{xx}{the explanatory variable.}
   \item{lambda}{an optional positive value that represents the smoothing parameter value.}
   \item{b.order}{an optional positive integer that specifies the degree of the B-spline basis matrix. Default is 3.}    
-  \item{nknots}{an optional positive integer that represents the number of knots of the P-spline. Default is \eqn{[n^{1/3}]+3}.}
+  \item{nknots}{an optional positive integer that represents the number of internal knots of the P-spline. Default is \eqn{m=[n^{\frac{1}{3}}]+3}.
+                The knots are located at the quantiles of order \eqn{0/(m-1),1/(m-1),\ldots,(m-1)/(m-1)} of xx.}
   \item{diff}{an optional positive integer that specifies the order of the difference penalty term. Default is 2.}  
 }
 \value{

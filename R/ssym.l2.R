@@ -72,6 +72,7 @@ if(missingArg(maxiter)) maxiter <- 1000
 
 	 y <- as.matrix(responses[subset,1])
 	 event <- as.matrix(responses[subset,2])
+	 event <- 1 - event
 	 n <- length(y)
 	 if(missingArg(spec)) spe <- 2
 	 else{if(spec!="AIC" & spec!="BIC") stop("The specified criterion to estimate the smoothing parameter is not supported!!",call.=FALSE)
@@ -408,9 +409,8 @@ if(any(statusm == "unknown")  | any(statusp == "unknown")){
 				objeto$penm <- penm2
 				objeto$penp <- penp2
 
-				if(family=="Contnormal" || family=="Student")  vP <- itpEC(theta0,objeto)
+				if(family=="Slash" || family=="Hyperbolic" || family=="Contnormal" || family=="Student")  vP <- itpEC(theta0,objeto)
 				else vP <- itpEC2(theta0,objeto)
-				vP <- itpEC2(theta0,objeto)
 
 				mu_es <- l.mu.i(pspm%*%vP[1:(p+sum(qm))])
 				phi_es <- l.phi.i(pspp%*%vP[(p+sum(qm)+1):(p+sum(qm)+l+sum(q))])

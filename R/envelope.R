@@ -22,11 +22,13 @@ bar <- txtProgressBar(min=0, max=reps, initial=0, width=50, char="+", style=3)
 while(i <= reps){
 	ysim <- object$mu.fitted  + sqrt(object$phi.fitted)*rvgs(length(object$y),family,xi)
 	objeto$y <- ysim
-	if(family=="Sinh-t" | family=="Sinh-normal"){
+	if(family=="Sinh-t"){
 		vP <- try(itpE2(theta0,objeto), silent=TRUE)}
-	else{if(family=="Powerexp" && xi < 0){vP <- itpE3(theta0,objeto)}
+	else{if((family=="Powerexp" && xi < 0) | family=="Sinh-normal" | family=="Normal"){vP <- try(itpE3(theta0,objeto), silent=TRUE)}
          else{vP <- try(itpE(theta0,objeto), silent=TRUE)}
     }
+
+	
 	if(is.vector(vP)){
 	  thetam <- vP[1:(object$p+sum(object$qm))]
 	  thetap <- vP[(object$p+sum(object$qm)+1):(object$p+sum(object$qm)+object$l+sum(object$q))]
@@ -50,10 +52,10 @@ mp <- apply(dtrp, 1, mean)
 close(bar)
 cat("\n")
 
-par(mfrow=c(1,2))
+#par(mfrow=c(1,2))
 if(missingArg(xlab.mu) || !is.character(xlab.mu)) xlab.mu <- "Quantile N(0,1)"
 if(missingArg(ylab.mu) || !is.character(ylab.mu)) ylab.mu <- "Deviance-type residuals"
-if(missingArg(main.mu) || !is.character(main.mu)) main.mu <- "Median submodel"
+if(missingArg(main.mu) || !is.character(main.mu)) main.mu <- "Median/Location submodel"
 if(missingArg(main.phi) || !is.character(main.phi)) main.phi <- "Skewness/Dispersion submodel"
 
 rmus <- residuals(object)$mu
@@ -70,7 +72,7 @@ qqnorm(mm,axes=FALSE,xlab="", ylab="", type="l",ylim=faixa,lty=2, main=main.mu)
 if(missingArg(xlab.phi) || !is.character(xlab.phi)) xlab.phi <- "Quantile N(0,1)"
 if(missingArg(ylab.phi) || !is.character(ylab.phi)) ylab.phi <- "Deviance-type residuals"
 if(missingArg(main.phi) || !is.character(main.phi)) main.phi <- " "
-#dev.new()
+dev.new()
 rphis <- residuals(object)$phi
 faixa <- range(rphis,lip,lsp)
 par(pty="s")

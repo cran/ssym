@@ -62,9 +62,11 @@ under the case-weight and response perturbation schemes.
 \item{lpdf}{a vector of individual contributions to the log-likelihood function.}
 }
 
-\references{Vanegas, L.H. and Paula, G.A. (2015a) A Semiparametric Approach for Joint Modeling of Median and Skewness. TEST 24, 110-135.
+\references{Vanegas, L.H. and Paula, G.A. (2015) A semiparametric approach for joint modeling of median and skewness. TEST 24, 110-135.
 
-			Vanegas, L.H. and Paula, G.A. (2015b) Log-symmetric distributions: statistical properties and parameter estimation. Brazilian Journal of Probability and Statistics (to appear)}
+			Vanegas, L.H. and Paula, G.A. (2016) Log-symmetric distributions: statistical properties and parameter estimation. Brazilian Journal of Probability and Statistics 30, 196-220.
+
+			Vanegas, L.H. and Paula, G.A. (2016) An extension of log-symmetric regression models: R codes and applications. Journal of Statistical Computation and Simulation 86, 1709-1735.}
 
 \author{Luis Hernando Vanegas <hvanegasp@gmail.com> and Gilberto A. Paula}
 
@@ -156,6 +158,8 @@ under the case-weight and response perturbation schemes.
 ################## Plot of deviance-type residuals ##################
 #plot(fit)
 #
+################### Simulated envelopes ##################
+#envelope(fit)
 ################## Plot of influence measures ##################
 #out <- influence(fit)
 
@@ -189,25 +193,25 @@ under the case-weight and response perturbation schemes.
 ###################################################################################
 
 #data("alcoa", package="robustloggamma")
-#alcoa2 <- data.frame(alcoa$ratio[alcoa$label=="C"])
-#colnames(alcoa2) <- "ratio"
+#alcoa2 <- data.frame(alcoa$dist[alcoa$label=="C"])
+#colnames(alcoa2) <- "dist"
 #
-#fit <- ssym.l(log(ratio) ~ 1, data=alcoa2, family="Slash", xi=0.86)
+#fit <- ssym.l(log(dist) ~ 1, data=alcoa2, family="Slash", xi=1.212)
 #
 ################## Plot of the fitted model ##################
-#id <- sort(alcoa2$ratio, index=TRUE)$ix
+#id <- sort(alcoa2$dist, index=TRUE)$ix
 #par(mfrow=c(1,2))
-#hist(alcoa2$ratio[id],xlim=c(0.001,0.01),ylim=c(0,600),prob=TRUE,breaks=300,
+#hist(alcoa2$dist[id],xlim=c(0,45),ylim=c(0,0.1),prob=TRUE,breaks=60,
 #     col="light gray",border="dark gray",xlab="",ylab="",main="")
 #par(new=TRUE)
-#plot(alcoa2$ratio[id],exp(fit$lpdf[id])/alcoa2$ratio[id],xlim=c(0.001,0.01),
-#     ylim=c(0,600),type="l",xlab="",ylab="",main="")
+#plot(alcoa2$dist[id],exp(fit$lpdf[id])/alcoa2$dist[id],xlim=c(0,45),
+#ylim=c(0,0.1), type="l",xlab="",ylab="",main="")
 #	 
-#plot(alcoa2$ratio[id],fit$cdfz[id],xlim=c(0.001,0.01),ylim=c(0,1),type="l",
+#plot(alcoa2$dist[id],fit$cdfz[id],xlim=range(alcoa2$dist),ylim=c(0,1),type="l",
 #     xlab="",ylab="",main="")
 #par(new=TRUE)
-#plot(ecdf(alcoa2$ratio[id]),xlim=c(0.001,0.01),ylim=c(0,1),verticals=TRUE,
-#     do.points=FALSE,col="dark gray",ylab="Probability",xlab="",main="ECDF")
+#plot(ecdf(alcoa2$dist[id]),xlim=range(alcoa2$dist),ylim=c(0,1),verticals=TRUE,
+#     do.points=FALSE,col="dark gray",ylab="",xlab="",main="")
 
 ##################################################################################
 ################### Boston Housing Data - a log-Slash model   ####################
@@ -231,6 +235,9 @@ under the case-weight and response perturbation schemes.
 #
 ################## Plot of influence measures ##################
 #out <- influence(fit)
+#
+################### Simulated envelopes ##################
+#envelope(fit)
 
 ###################################################################################
 ####################### mcycle Data - a Power-exponential model   #################
@@ -243,6 +250,9 @@ under the case-weight and response perturbation schemes.
 #par(mfrow=c(1,2))
 #np.graph(fit,which=1,obs=TRUE)
 #np.graph(fit,which=2,exp=TRUE,obs=TRUE)
+#
+################### Simulated envelopes ##################
+#envelope(fit)
 
 ###################################################################################
 ################### Steel Data - a log-hyperbolic model   ####################

@@ -363,7 +363,7 @@ if(link.mu=="identity"){
 	l2.mu <- function(mu) matrix(0,length(mu),1)	
 	attr(l1.mu,"link") <- "identity"}
 else{if(link.mu=="log"){
-		l.mu <- function(y) log(y)
+		l.mu <- function(y) log(abs(y))
 		l.mu.i <- function(y) exp(y)
 		l1.mu <- function(mu) mu
 		l2.mu <- function(mu) -1/mu^2	
@@ -586,7 +586,11 @@ if(!missingArg(local.influence)){
 	out_$cw.theta <- cbind(cw.theta,cw2.theta)
 	out_$pr.theta <- cbind(pr.theta,pr2.theta)
 }	  
-}else{out_ <- list(cdfz=cdf(z_es), lpdf=(log(pdf(z_es))-(1/2)*log(phi_es)), censored="FALSE")}
+}else{if(qm>0) out_ <- list(cdfz=cdf(z_es), lpdf=(log(pdf(z_es))-(1/2)*log(phi_es)), censored="FALSE",lambdas.mu=lambdas.mu)
+      else out_ <- list(cdfz=cdf(z_es), lpdf=(log(pdf(z_es))-(1/2)*log(phi_es)), censored="FALSE")}
+
+
+
 
  class(out_) <- "ssym"
  out_$call <- match.call()

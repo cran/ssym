@@ -62,9 +62,11 @@ under the case-weight and response perturbation schemes.
 \item{lpdf}{a vector of individual contributions to the log-likelihood function.}
 }
 
-\references{Vanegas, L.H. and Paula, G.A. (2015a) A Semiparametric Approach for Joint Modeling of Median and Skewness. TEST 24, 110-135.
+\references{Vanegas, L.H. and Paula, G.A. (2015) A semiparametric approach for joint modeling of median and skewness. TEST 24, 110-135.
 
-			Vanegas, L.H. and Paula, G.A. (2015b) Log-symmetric distributions: statistical properties and parameter estimation. Brazilian Journal of Probability and Statistics (to appear)}
+			Vanegas, L.H. and Paula, G.A. (2016) Log-symmetric distributions: statistical properties and parameter estimation. Brazilian Journal of Probability and Statistics 30, 196-220.
+
+			Vanegas, L.H. and Paula, G.A. (2016) An extension of log-symmetric regression models: R codes and applications. Journal of Statistical Computation and Simulation 86, 1709-1735.}
 
 \author{Luis Hernando Vanegas <hvanegasp@gmail.com> and Gilberto A. Paula}
 
@@ -78,8 +80,8 @@ under the case-weight and response perturbation schemes.
 ######### Ultrasonic Calibration Data - a log-contaminated-normal model ###########
 ###################################################################################
 #data("Chwirut1", package="NISTnls")
-#fit <- ssym.nl(log(y) ~ -b1*x-log(b2 + b3*x) | x, start=c(b1=0.15,b2=0.005,b3=0.012),
-#        data=Chwirut1, family='Contnormal', xi=c(0.68,0.1), local.influence=TRUE)
+#fit<-ssym.nl(log(y) ~ -b1*x-log(b2 + b3*x)|x,start=c(b1=0.15,b2=0.005,b3=0.012),
+#      data=Chwirut1, family='Contnormal', xi=c(0.68,0.1), local.influence=TRUE)
 #summary(fit)
 #
 ########################### Extra parameter ###########################
@@ -104,32 +106,31 @@ under the case-weight and response perturbation schemes.
 #
 ########################### Extra parameter ###########################
 #extra.parameter(fit,1.3,1.8)
-
+#
 ################## Graph of deviance-type residuals ##################
 #plot(fit)
-
+#
 ################## Simulated envelopes ##################
-#envelope(fit)
-
+#envelope(fit,reps=100,conf=0.95)
 ###################################################################################
 ################## European rabbits Data - a log-normal model   #############
 ###################################################################################
 #data("Erabbits", package="ssym")
-#fit <- ssym.nl(log(wlens) ~ b1 - b2/(b3 + age) | psp(age), start=c(b1=5,
+#fit <- ssym.nl(log(wlens) ~ b1 - b2/(b3 + age) | age, start=c(b1=5,
 #               b2=130, b3=36), data=Erabbits, family='Normal')
 #summary(fit)
 #
-################## Graph of the nonparametric effect ##################
-#np.graph(fit, which=2, exp=TRUE)
-#
 ################## Graph of deviance-type residuals ##################
 #plot(fit)
-
+#
+################## Simulated envelopes ##################
+#envelope(fit)
+#
 ###################################################################################
 ################### Metsulfuron Data - a log-Student-t model ######################
 ###################################################################################
 #data("M4", package="nlreg")
-#fit <- ssym.nl(log(area) ~ log(b1+(b2-b1)/(1+(dose/b3)^b4)) | ncs(dose), data=M4,
+#fit <- ssym.nl(log(area) ~ log(b1+(b2-b1)/(1+(dose/b3)^b4))|ncs(dose), data=M4,
 #       start = c(b1=4, b2=1400, b3=0.11, b4=1.23), family="Student", xi=6)
 #summary(fit)
 #
@@ -139,9 +140,12 @@ under the case-weight and response perturbation schemes.
 ################## Graph of deviance-type residuals ##################
 #plot(fit)
 #
+################## Graph of the nonparametric effect ##################
+#np.graph(fit,which=2,"dose")
+#
 ################## Simulated envelopes ##################
 #envelope(fit)
-
+#
 ###################################################################################
 ################# Blood flow Data - a log-power-exponential model #################
 ###################################################################################
@@ -152,10 +156,12 @@ under the case-weight and response perturbation schemes.
 #
 ########################### Extra parameter ###########################
 #extra.parameter(fit,-0.5,0)
-
 ################## Graph of deviance-type residuals ##################
 #plot(fit)
-
+#
+################## Simulated envelopes ##################
+#envelope(fit,reps=100,conf=0.99)
+#
 ###################################################################################
 ######### Gross Domestic Product per capita Data - a Birnbaum-Saunders model ######
 ###################################################################################
@@ -165,7 +171,6 @@ under the case-weight and response perturbation schemes.
 #summary(fit)
 ########################### Extra parameter ###########################
 #extra.parameter(fit,0.5,3)
-
 ################## Plot of the fitted model ##################
 #id <- sort(gdp$gdp2010, index=TRUE)$ix
 #par(mfrow=c(1,2))
@@ -180,7 +185,6 @@ under the case-weight and response perturbation schemes.
 #par(new=TRUE)
 #plot(ecdf(gdp$gdp2010[id]),xlim=range(gdp$gdp2010),ylim=c(0,1),verticals=TRUE,
 #     do.points=FALSE,col="dark gray",ylab="Probability.",xlab="",main="ECDF")
-
 ###################################################################################
 ############# Australian Institute of Sport Data - a log-normal model #############
 ###################################################################################
@@ -194,23 +198,28 @@ under the case-weight and response perturbation schemes.
 #
 ################## Graph of deviance-type residuals ##################
 #plot(fit)
-
+#
+################## Simulated envelopes ##################
+#envelope(fit)
+#
 ###################################################################################
 ################ Daphnia Data - a log-power-exponential model #####################
 ###################################################################################
 #data("daphnia", package="nlreg")
 #fit <- ssym.nl(log(time) ~ log(b1+(b2-b1)/(1+(conc/b4)^b3)) | ncs(conc),
-#           data=daphnia, start = c(b1=0, b2=50 , b3=2, b4=0.2), family="Powerexp",
-#		xi=-0.4)
+#       data=daphnia, start = c(b1=0, b2=50 , b3=2, b4=0.2), family="Powerexp",
+#		xi=-0.42)
 #summary(fit)
 #
 ########################### Extra parameter ###########################
-#extra.parameter(fit,-0.6,0)
+#extra.parameter(fit,-0.5,-0.3)
 #
 ################## Graph of deviance-type residuals ##################
 #plot(fit)
 #
+################## Graph of the nonparametric effect ##################
+#np.graph(fit,which=2,"conc")
+#
 ################## Simulated envelopes ##################
 #envelope(fit)
-
 }

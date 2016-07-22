@@ -29,7 +29,7 @@ ssym.l2(formula, family, xi, data, epsilon, maxiter, subset, link.mu, link.phi,
   \item{std.out}{logical. If FALSE, just a reduced set of attributes is returned by the model-fitting function. Default is \code{TRUE}}.
 }
 \details{
-The argument \emph{formula} comprises of three parts (separated by the symbols "~" and "|"), namely: censoring status and observed response variable (in log-scale) in a object
+The argument \emph{formula} comprises of three parts (separated by the symbols "~" and "|"), namely: event status and observed response variable (in log-scale) in a object
 of class \emph{Surv}, predictor of the median submodel (having logarithmic link) and predictor of the skewness (or the relative dispersion) submodel (having logarithmic link).
 An arbitrary number of nonparametric effects may be specified in the predictors. These effects are specified to be approximated by natural cubic splines or P-splines using the functions
 \code{ncs()} or \code{psp()}, respectively.
@@ -59,9 +59,11 @@ under the case-weight and response perturbation schemes.
 \item{lpdf}{a vector of individual contributions to the log-likelihood function.}
 }
 
-\references{Vanegas, L.H. and Paula, G.A. (2015a) A Semiparametric Approach for Joint Modeling of Median and Skewness. TEST 24, 110-135.
+\references{Vanegas, L.H. and Paula, G.A. (2015) A semiparametric approach for joint modeling of median and skewness. TEST 24, 110-135.
 
-			Vanegas, L.H. and Paula, G.A. (2015b) Log-symmetric distributions: statistical properties and parameter estimation. Brazilian Journal of Probability and Statistics (to appear)}
+			Vanegas, L.H. and Paula, G.A. (2016) Log-symmetric distributions: statistical properties and parameter estimation. Brazilian Journal of Probability and Statistics 30, 196-220.
+
+			Vanegas, L.H. and Paula, G.A. (2016) An extension of log-symmetric regression models: R codes and applications. Journal of Statistical Computation and Simulation 86, 1709-1735.}
 
 \author{Luis Hernando Vanegas <hvanegasp@gmail.com> and Gilberto A. Paula}
 
@@ -76,7 +78,7 @@ under the case-weight and response perturbation schemes.
 ################ Lung Cancer Trial - a log-Student model ##########################
 ###################################################################################
 #data("veteran", package="survival")
-#fit <- ssym.l2(Surv(log(time), 1-status) ~ karno| karno, data = veteran,
+#fit <- ssym.l2(Surv(log(time), status) ~ karno| karno, data = veteran,
 #              family="Student", xi=4.5)
 #summary(fit)
 #
@@ -92,7 +94,7 @@ under the case-weight and response perturbation schemes.
 # data("pbc", package="survival")
 # pbc2 <- data.frame(pbc[!is.na(pbc$edema) & !is.na(pbc$stage) & !is.na(pbc$bili),])
 #
-# fit <- ssym.l2(Surv(log(time),ifelse(status>=1,0,1) ) ~ factor(edema) +
+# fit <- ssym.l2(Surv(log(time),ifelse(status>=1,1,0) ) ~ factor(edema) +
 #                stage + ncs(bili), data = pbc2, family="Powerexp",
 #                xi=0.47, local.influence=TRUE)
 # summary(fit)
@@ -111,8 +113,8 @@ under the case-weight and response perturbation schemes.
 ####################################################################################
 # data("myeloma", package="ssym")
 #
-#fit <- ssym.l2(Surv(log(t),event) ~ x1 + x2 + x5| -1 + x3, data=myeloma,
-#       family="Sinh-normal", xi=1.8, local.influence=TRUE)
+#fit <- ssym.l2(Surv(log(t),1-event) ~ x1 + x2 + x5| -1 + x3, data=myeloma,
+#       family="Sinh-normal", xi=1.8)
 #summary(fit)
 #
 ################## Graph of deviance-type residuals ##################
@@ -125,7 +127,7 @@ under the case-weight and response perturbation schemes.
 ####################################################################################
 
 #data("Baboons", package="ssym")
-#fit <- ssym.l2(Surv(-log(t),cs) ~ 1, data=Baboons, family="Powerexp", xi=-0.35)
+#fit <- ssym.l2(Surv(-log(t),1-cs) ~ 1, data=Baboons, family="Powerexp", xi=-0.35)
 #
 #summary(fit)
 ################## Graph of deviance-type residuals ##################
