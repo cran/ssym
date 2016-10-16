@@ -20,7 +20,7 @@ if(object$censored==FALSE){
 	printCoefmat(cmat,digits=3)
 }else cat("Censored %: ",round(100*mean(object$event),2),"\n")
 
-cat("\n ************************* Median submodel ****************************\n")
+cat("\n ********************* Median/Location submodel ************************\n")
 if(object$orig=="linear") cat("link: ", attr(object$l1.mu,"link"),"\n")
 if(object$p>0){
 TAB		 <- cbind(Estimate <- object$theta.mu[1:object$p],
@@ -45,7 +45,8 @@ printCoefmat(TAB, P.values=TRUE, has.Pvalue=TRUE,digits=4, signif.legend=FALSE,t
 
 cat("\n **** Deviance: ",round(sum(object$deviance.mu),digits=2),"\n")
 
-cat(" **************************** Dispersion submodel ***********************\n")
+cat(" *********************** Skewness/Dispersion submodel ******************\n")
+
 cat("link: ", attr(object$l1.phi,"link"),"\n")
 if(object$l>0){
 TAB		 <- cbind(Estimate <- object$theta.phi[1:object$l],

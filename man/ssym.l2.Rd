@@ -34,9 +34,7 @@ of class \emph{Surv}, predictor of the median submodel (having logarithmic link)
 An arbitrary number of nonparametric effects may be specified in the predictors. These effects are specified to be approximated by natural cubic splines or P-splines using the functions
 \code{ncs()} or \code{psp()}, respectively.
 
-The iterative estimation process is based on the Gauss-Seidel, Newton-Raphson and backfitting algorithms. Because some distributions such as log-Student-t,
-log-contaminated-normal, log-slash and log-hyperbolic may be obtained as a power mixture of the log-normal distribution, the
-expectation-constrained maximization (ECM) algorithm is applied in those cases to obtain a more efficient iterative process of parameter estimation. The
+The iterative estimation process is based on the Gauss-Seidel, Newton-Raphson and backfitting algorithms. The
 smoothing parameter is chosen by minimizing the AIC or BIC criteria.
 
 The function \code{ssym.l2()} calculates overall goodness-of-fit statistics, deviance-type residuals for both submodels, as well as local influence measures

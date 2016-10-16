@@ -409,7 +409,7 @@ if(any(statusm == "unknown")  | any(statusp == "unknown")){
 				objeto$penm <- penm2
 				objeto$penp <- penp2
 
-				if(family=="Slash" || family=="Hyperbolic" || family=="Contnormal" || family=="Student")  vP <- itpEC(theta0,objeto)
+				if(family=="Slash" || family=="Hyperbolic" || family=="Contnormal" || family=="Student")  vP <- itpEC2(theta0,objeto)
 				else vP <- itpEC2(theta0,objeto)
 
 				mu_es <- l.mu.i(pspm%*%vP[1:(p+sum(qm))])
@@ -457,7 +457,7 @@ if(any(statusm == "unknown")  | any(statusp == "unknown")){
 	objeto$penm <- penm
 	objeto$penp <- penp
 
-if(family=="Slash" || family=="Hyperbolic" || family=="Contnormal" || family=="Student")  vP <- itpEC(theta0,objeto)
+if(family=="Slash" || family=="Hyperbolic" || family=="Contnormal" || family=="Student")  vP <- itpEC2(theta0,objeto)
 else vP <- itpEC2(theta0,objeto)
 
 thetam <- vP[1:(p+sum(qm))]

@@ -1,4 +1,4 @@
-9281bd35e217040b1810c6fbb52cdb30 *DESCRIPTION
+90818fb009daa58764bc9dc6dcea82d9 *DESCRIPTION
 d208a13b5a670986d2ed4652de74ae18 *NAMESPACE
 ec2bc4c6d9b7c07b5af480b540c33441 *R/AIC.ssym.R
 2f559b9cb9dcb05e9398bee4d09471aa *R/BIC.ssym.R
@@ -11,7 +11,6 @@ ffbe00980e5f6fa64c7c2e529c9a7253 *R/influence.ssym.R
 470d119d0e428b050fd3810dff904689 *R/itpE.R
 de16535ece3488cf38e798294e6f8393 *R/itpE2.R
 1a5fb939f9a0e7f877fb9d2616d2348e *R/itpE3.R
-735af66a69da2b8a41feb33a89ef813b *R/itpEC.R
 ed662a48217b834f4ea7e4a42b22d74a *R/itpEC2.R
 4451eb3ff48a8d13cf34fcc068a6505b *R/logLik.ssym.R
 473f7448ca3fee4b4d3f80abaa1bc8c6 *R/ncs.R
@@ -22,9 +21,9 @@ f5df45c5e2cc9e39b885893182e2bca3 *R/psp.R
 902ac5d7682ccd3174b51ff9829bb2cd *R/rvgs.R
 0133da559e07150726855b0ba2bee237 *R/ssym-internal.R
 927eb2ed0d3228a71928d998efb0aade *R/ssym.l.R
-3233e2a4cb876e8fbb42ff5b2bdc05a4 *R/ssym.l2.R
+ef1b37cb030f11a61a2a191e0cff4c04 *R/ssym.l2.R
 b08ee4437f574bb20daec42e03d9f7db *R/ssym.nl.R
-5a3aeeaf5100a00afc9839557277de72 *R/summary.ssym.R
+a72c6dd4e2904d37f60d25038d3e868d *R/summary.ssym.R
 195857516256b8a07c64198e78921ad2 *R/vcov.ssym.R
 5cd9380228266d524b2f9ef962489e61 *data/Baboons.rda
 cec57d67124fed372bc8fe620f965ac6 *data/Biaxial.rda
@@ -54,7 +53,6 @@ d83263a2f011f7380b884e75d76a5746 *man/estfun.ssym.Rd
 39888f2b48cd9dc9fca7861dcce62410 *man/itpE.Rd
 ec36aeb15185e9c57b9b32cbee8870aa *man/itpE2.Rd
 f742f5d96ae19ac7ef3f8b97c0aff607 *man/itpE3.Rd
-f09b3bca922e1041590139a89ca90b72 *man/itpEC.Rd
 09e8353790f5f71867c6d6511c778042 *man/itpEC2.Rd
 784027d42b567747a7a34600363d6fbc *man/logLik.ssym.Rd
 b5b363132e989a756923e27ebbeef946 *man/myeloma.Rd
@@ -65,9 +63,9 @@ ceb509114451fc3ea1e62b497100b7f2 *man/print.ssym.Rd
 2d7b6408f8ff0dcf28dd9cdcddee16fa *man/psp.Rd
 35c891f03c981435641ebddfd9502361 *man/residuals.ssym.Rd
 e8d7cf307680856acdd0c898a6df959b *man/rvgs.Rd
-cd753f43c0463f283dac685ca490a7cc *man/ssym-package.Rd
+aae339504eade2773655fbf73fb0678f *man/ssym-package.Rd
 ebda6f7924ad4dfb5f937ec02dafc167 *man/ssym.l.Rd
-ca92ea38dc04c1a614486eac471f89ff *man/ssym.l2.Rd
+e1a513b93a228f3914faf702256f384d *man/ssym.l2.Rd
 e50571998ca97a6ff4bf0674df2936be *man/ssym.nl.Rd
 8fbef6e6c1c3fef6e21cb3d62af9765a *man/summary.ssym.Rd
 1b02f5e408766d2bf8d9ea7a8959b88d *man/vcov.ssym.Rd
