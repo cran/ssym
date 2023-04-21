@@ -1,10 +1,10 @@
-90818fb009daa58764bc9dc6dcea82d9 *DESCRIPTION
+6a4451f4402294a40fd7b0013410515f *DESCRIPTION
 d208a13b5a670986d2ed4652de74ae18 *NAMESPACE
-ec2bc4c6d9b7c07b5af480b540c33441 *R/AIC.ssym.R
+16394c1a97fcf1c6a84bc485233dbb9c *R/AIC.ssym.R
 2f559b9cb9dcb05e9398bee4d09471aa *R/BIC.ssym.R
 0d1a4f82af6dcfbadfd41ac8e442f95d *R/coef.ssym.R
 ae3efde17a3c8f5a57fcca2c6a2cbd8a *R/envelope.R
-5fb5bf382d2b2099d245dc58da5626ce *R/estfun.ssym.R
+9db3e3bddc2c78cd12d76f4486f8defd *R/estfun.ssym.R
 e9db5b9727a2686e15849cf6958f9006 *R/extra.parameter.R
 f03f6772370596800954e50fdafb3e23 *R/fitted.ssym.R
 ffbe00980e5f6fa64c7c2e529c9a7253 *R/influence.ssym.R
@@ -19,7 +19,6 @@ dc346dd3b8b602d2c9ab8d80ee868016 *R/plot.ssym.R
 f5df45c5e2cc9e39b885893182e2bca3 *R/psp.R
 90e973bf7bb7b7e6e29db214fe6b4683 *R/residuals.ssym.R
 902ac5d7682ccd3174b51ff9829bb2cd *R/rvgs.R
-0133da559e07150726855b0ba2bee237 *R/ssym-internal.R
 927eb2ed0d3228a71928d998efb0aade *R/ssym.l.R
 ef1b37cb030f11a61a2a191e0cff4c04 *R/ssym.l2.R
 b08ee4437f574bb20daec42e03d9f7db *R/ssym.nl.R
@@ -34,14 +33,13 @@ c839d5f28baa59c137d30b2db90a6ec6 *data/Snacks.rda
 b393ff71307f5bb9e97a9cd51a076ded *data/Steel.rda
 61cee0c3b0f4450f14834d6ce02cc3f8 *data/gdp.rda
 eda57ec95bc659e9b8818c6f81be8b41 *data/myeloma.rda
-ab622e06c38205a19e8f0e9dd97329c1 *man/AIC.ssym.Rd
 7bfcfe51847f73d5e994543a4db47248 *man/BIC.ssym.Rd
 013d8ee7b0b666243c1bace5b926fd82 *man/Baboons.Rd
 a29006942fbd82d9f6b8a95a3cfffbbf *man/Biaxial.Rd
 81179dc7fc2d1313c9387aad73cdbb48 *man/Claims.Rd
 9c8afff964229fc313d2082ba35f17be *man/Erabbits.Rd
 16efe0ff302e8de7aec7b3fe3da74fa9 *man/Ovocytes.Rd
-91b41a3a37d2dc5b8603f5c3cfc0299f *man/Snacks.Rd
+421b05843fe82241e7be32f96af1e390 *man/Snacks.Rd
 aed8cf5e49df20d6c414f35855019435 *man/Steel.Rd
 d24ea08df800b039cc8f0fa2bf1e7e78 *man/coef.ssym.Rd
 f106789c900618d94c7b3ecc197e4eac *man/envelope.Rd

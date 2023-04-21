@@ -1,3 +1,9 @@
+#' \name{AIC.ssym}
+#' \alias{AIC.ssym}
+#' \title{AIC.ssym}
+#' \description{
+#'   \bold{AIC.ssym} calculates the goodness-of-fit statistic AIC from an object of class ``"ssym".}
+#'
 AIC.ssym <-
 function(object, ...){
 	gle <- sum(object$gle.mu) + sum(object$gle.phi)
